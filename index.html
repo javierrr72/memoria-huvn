@@ -5,12 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Memoria Enfermería HUVN</title>
 <style>
-  :root {
-    --azul:#1a4f7a;--azul-claro:#2d7ab5;--azul-fondo:#e8f1f8;
-    --verde:#1d7a4f;--gris:#f5f6f7;--gris-borde:#dde2e8;
-    --texto:#1a1f2e;--texto-suave:#5a6474;--blanco:#ffffff;
-    --sombra:0 2px 8px rgba(26,79,122,0.10);--radio:10px;
-  }
+  :root{--azul:#1a4f7a;--azul-claro:#2d7ab5;--azul-fondo:#e8f1f8;--verde:#1d7a4f;--gris:#f5f6f7;--gris-borde:#dde2e8;--texto:#1a1f2e;--texto-suave:#5a6474;--blanco:#ffffff;--sombra:0 2px 8px rgba(26,79,122,0.10);--radio:10px}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:var(--texto);min-height:100vh}
   #pantalla-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a4f7a 0%,#2d7ab5 50%,#1d7a4f 100%)}
@@ -21,7 +16,6 @@
   .login-card .hospital{font-size:12px;color:var(--texto-suave);margin-bottom:32px;background:var(--gris);padding:6px 12px;border-radius:20px;display:inline-block}
   .btn-google{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:12px 20px;border:1.5px solid var(--gris-borde);border-radius:8px;background:white;font-size:15px;font-weight:500;color:var(--texto);cursor:pointer;transition:background .2s,box-shadow .2s;margin-bottom:8px}
   .btn-google:hover{background:#f8f9fa;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-  .google-icon{width:20px;height:20px}
   .login-info{font-size:12px;color:var(--texto-suave);margin-top:16px;line-height:1.5}
   #pantalla-app{display:none;min-height:100vh}
   .header{background:var(--azul);color:white;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
@@ -32,7 +26,7 @@
   .header-der{display:flex;align-items:center;gap:12px}
   .usuario-pill{background:rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:6px}
   .usuario-avatar{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
-  .btn-salir{background:rgba(255,255,255,0.15);border:none;color:white;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;transition:background .2s}
+  .btn-salir{background:rgba(255,255,255,0.15);border:none;color:white;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px}
   .btn-salir:hover{background:rgba(255,255,255,0.25)}
   .layout{display:flex;min-height:calc(100vh - 60px)}
   .sidebar{width:220px;background:var(--blanco);border-right:1px solid var(--gris-borde);padding:20px 0;flex-shrink:0}
@@ -56,36 +50,28 @@
   .form-group{display:flex;flex-direction:column;gap:4px}
   .form-group.span2{grid-column:span 2}
   label{font-size:12px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.04em}
-  input,select,textarea{padding:9px 12px;border:1.5px solid var(--gris-borde);border-radius:7px;font-size:14px;font-family:inherit;color:var(--texto);transition:border-color .2s,box-shadow .2s;background:var(--blanco);width:100%}
+  input,select,textarea{padding:9px 12px;border:1.5px solid var(--gris-borde);border-radius:7px;font-size:14px;font-family:inherit;color:var(--texto);transition:border-color .2s;background:var(--blanco);width:100%}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul-claro);box-shadow:0 0 0 3px rgba(45,122,181,0.12)}
   textarea{resize:vertical;min-height:88px;line-height:1.5}
   .tipo-hint{font-size:11px;color:var(--texto-suave);margin-top:3px;font-style:italic}
   .campos-extra{margin-top:14px;padding-top:14px;border-top:1px dashed var(--gris-borde)}
   .btn-row{display:flex;gap:10px;align-items:center;margin-top:20px}
-  .btn-primary{background:var(--azul);color:white;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s,transform .1s;display:flex;align-items:center;gap:7px}
+  .btn-primary{background:var(--azul);color:white;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:7px}
   .btn-primary:hover{background:var(--azul-claro)}
-  .btn-primary:active{transform:scale(0.98)}
-  .btn-secondary{background:var(--gris);color:var(--texto-suave);border:1px solid var(--gris-borde);padding:10px 18px;border-radius:8px;font-size:14px;cursor:pointer;transition:background .2s}
-  .btn-secondary:hover{background:var(--gris-borde)}
-  .btn-success{background:var(--verde);color:white;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s}
-  .btn-success:hover{background:#165f3c}
+  .btn-secondary{background:var(--gris);color:var(--texto-suave);border:1px solid var(--gris-borde);padding:10px 18px;border-radius:8px;font-size:14px;cursor:pointer}
+  .btn-success{background:var(--verde);color:white;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
   .filtros{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
   .filtros select{width:auto;flex:1;min-width:150px;font-size:13px;padding:7px 10px}
-  .entrada-card{background:var(--blanco);border:1px solid var(--gris-borde);border-radius:var(--radio);padding:14px 18px;margin-bottom:10px;box-shadow:var(--sombra);display:flex;align-items:flex-start;gap:14px;transition:box-shadow .2s}
-  .entrada-card:hover{box-shadow:0 4px 16px rgba(26,79,122,0.12)}
+  .entrada-card{background:var(--blanco);border:1px solid var(--gris-borde);border-radius:var(--radio);padding:14px 18px;margin-bottom:10px;box-shadow:var(--sombra);display:flex;align-items:flex-start;gap:14px}
   .entrada-tipo-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
   .entrada-body{flex:1}
   .entrada-titulo{font-size:14px;font-weight:600;color:var(--texto);margin-bottom:4px}
   .entrada-meta{display:flex;gap:8px;flex-wrap:wrap}
   .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px;font-weight:500}
-  .badge-proyecto{background:#e6f1fb;color:#185fa5}
-  .badge-formacion{background:#e1f5ee;color:#0f6e56}
-  .badge-reconocimiento{background:#faeeda;color:#854f0b}
-  .badge-indicador_numerico{background:#eaf3de;color:#3b6d11}
-  .badge-texto_narrativo{background:#f1efe8;color:#5f5e5a}
-  .badge-publicacion{background:#fbeaf0;color:#993556}
-  .badge-tabla{background:#eeedfe;color:#534ab7}
-  .badge-lista{background:#faece7;color:#993c1d}
+  .badge-proyecto{background:#e6f1fb;color:#185fa5}.badge-formacion{background:#e1f5ee;color:#0f6e56}
+  .badge-reconocimiento{background:#faeeda;color:#854f0b}.badge-indicador_numerico{background:#eaf3de;color:#3b6d11}
+  .badge-texto_narrativo{background:#f1efe8;color:#5f5e5a}.badge-publicacion{background:#fbeaf0;color:#993556}
+  .badge-tabla{background:#eeedfe;color:#534ab7}.badge-lista{background:#faece7;color:#993c1d}
   .badge-gris{background:var(--gris);color:var(--texto-suave)}
   .entrada-fecha{font-size:11px;color:var(--texto-suave);white-space:nowrap}
   .seccion-tag{font-size:11px;color:var(--texto-suave);margin-top:4px}
@@ -101,7 +87,6 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .empty-state{text-align:center;padding:48px 20px;color:var(--texto-suave)}
   .empty-state .icono{font-size:40px;margin-bottom:12px}
-  .info-box{background:var(--azul-fondo);border:1px solid #b5d4f4;border-radius:8px;padding:12px 16px;font-size:13px;color:var(--azul);margin-top:16px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -113,7 +98,7 @@
     <div class="subtitulo">Plataforma de gestión de datos</div>
     <div class="hospital">Hospital Universitario Virgen de las Nieves · Granada</div>
     <button class="btn-google" onclick="iniciarSesion()">
-      <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Iniciar sesión con Google
     </button>
     <div class="login-info">Accede con tu cuenta de Google del hospital o personal.<br>Solo el personal autorizado puede iniciar sesión.</div>
@@ -193,7 +178,7 @@
         <div class="form-card">
           <h3>4. Autoría</h3>
           <div class="form-grid">
-            <div class="form-group"><label>Nombre y cargo</label><input type="text" id="f-autor" readonly style="background:#f5f6f7"></div>
+            <div class="form-group"><label>Nombre</label><input type="text" id="f-autor" readonly style="background:#f5f6f7"></div>
             <div class="form-group"><label>Notas adicionales (opcional)</label><input type="text" id="f-observaciones" placeholder="Cualquier matiz adicional..."></div>
           </div>
         </div>
@@ -245,15 +230,13 @@
 
 <script>
 const CLIENT_ID = '669232783014-5dc86g3p2djj0l39if0440vg5mc5g8cu.apps.googleusercontent.com';
-const API_KEY_DRIVE = '';
 const FILE_ID = '13nyYan8MyOPdDKmMpGUwHYSINmQpGF7u';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
-let tokenCliente = null;
+let accessToken = null;
 let usuarioActual = null;
 let allEntradas = [];
 let memoriaGenerada = '';
-let accessToken = null;
 
 const SECCIONES = {
   '1. Presentación':['1. Presentación'],
@@ -274,8 +257,7 @@ const TIPO_HINTS = {
   formacion:'Para cursos, sesiones o congresos.',
   reconocimiento:'Para premios o certificaciones.',
   publicacion:'Para artículos o comunicaciones científicas.',
-  tabla:'Para datos en tabla.',
-  lista:'Para listados de items.'
+  tabla:'Para datos en tabla.',lista:'Para listados de items.'
 };
 const AREAS = {
   'Hospital General':['Área Médica','Área de Críticos','Área de Salud Mental','Dirección de Enfermería'],
@@ -304,35 +286,37 @@ const CAMPOS_EXTRA = {
 const TIPO_COLORES = {proyecto:'#2d7ab5',formacion:'#1d9e75',reconocimiento:'#ef9f27',indicador_numerico:'#639922',texto_narrativo:'#888780',publicacion:'#d4537e',tabla:'#7f77dd',lista:'#d85a30'};
 
 function iniciarSesion() {
-  tokenCliente = google.accounts.oauth2.initTokenClient({
+  const client = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-    callback: async (tokenResponse) => {
-      if (tokenResponse.error) { showToast('Error al iniciar sesión', 'error'); return; }
-      accessToken = tokenResponse.access_token;
-      const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {headers:{Authorization:'Bearer '+accessToken}});
-      const info = await r.json();
-      usuarioActual = {email: info.email, nombre: info.name};
-      document.getElementById('user-nombre').textContent = info.name.split(' ')[0];
-      document.getElementById('user-inicial').textContent = info.name.charAt(0).toUpperCase();
-      document.getElementById('f-autor').value = info.name;
-      document.getElementById('pantalla-login').style.display = 'none';
-      document.getElementById('pantalla-app').style.display = 'block';
-      showToast('Bienvenido/a, ' + info.name.split(' ')[0] + ' ✓', 'ok');
-      cargarDatos();
+    scope: SCOPES,
+    callback: async (resp) => {
+      if(resp.error){ showToast('Error al iniciar sesión','error'); return; }
+      accessToken = resp.access_token;
+      try {
+        const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+accessToken}});
+        const info = await r.json();
+        usuarioActual = {email:info.email, nombre:info.name};
+        document.getElementById('user-nombre').textContent = info.name.split(' ')[0];
+        document.getElementById('user-inicial').textContent = info.name.charAt(0).toUpperCase();
+        document.getElementById('f-autor').value = info.name;
+        document.getElementById('pantalla-login').style.display = 'none';
+        document.getElementById('pantalla-app').style.display = 'block';
+        showToast('Bienvenido/a, '+info.name.split(' ')[0]+' ✓','ok');
+        await cargarDatos();
+      } catch(e){ showToast('Error al obtener datos de usuario','error'); }
     }
   });
-  tokenCliente.requestAccessToken();
+  client.requestAccessToken({prompt:'consent'});
 }
 
-function cerrarSesion() {
+function cerrarSesion(){
   if(accessToken) google.accounts.oauth2.revoke(accessToken);
-  accessToken = null; usuarioActual = null;
-  document.getElementById('pantalla-login').style.display = 'flex';
-  document.getElementById('pantalla-app').style.display = 'none';
+  accessToken=null; usuarioActual=null;
+  document.getElementById('pantalla-login').style.display='flex';
+  document.getElementById('pantalla-app').style.display='none';
 }
 
-function mostrarPanel(id, el) {
+function mostrarPanel(id,el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
@@ -372,29 +356,30 @@ function limpiarFormulario(){
   document.getElementById('f-subseccion').innerHTML='<option value="">Primero elige sección</option>';
 }
 
-async function leerArchivoDrive(){
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media`, {headers:{Authorization:'Bearer '+accessToken}});
-  if(!r.ok) throw new Error('No se pudo leer el archivo');
+async function leerDrive(){
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
+  if(!r.ok) throw new Error('Error leyendo Drive: '+r.status);
   return await r.json();
 }
 
-async function guardarArchivoDrive(datos){
-  const body = JSON.stringify(datos);
-  const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${FILE_ID}?uploadType=media`, {
-    method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-    body
+async function escribirDrive(datos){
+  const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${FILE_ID}?uploadType=media`,{
+    method:'PATCH',
+    headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+    body:JSON.stringify(datos)
   });
-  if(!r.ok) throw new Error('No se pudo guardar');
-  return await r.json();
+  if(!r.ok) throw new Error('Error escribiendo Drive: '+r.status);
 }
 
 async function cargarDatos(){
-  try {
-    const json = await leerArchivoDrive();
-    allEntradas = json.entradas || [];
+  try{
+    const json = await leerDrive();
+    allEntradas = json.entradas||[];
     renderResumen(json);
     renderEntradas();
-  } catch(e) { showToast('Error al cargar datos de Drive', 'error'); }
+  }catch(e){
+    showToast('Error al cargar datos: '+e.message,'error');
+  }
 }
 
 async function guardarEntrada(){
@@ -406,17 +391,17 @@ async function guardarEntrada(){
   btn.innerHTML='<span class="spinner"></span> Guardando...';
   btn.disabled=true;
   const entrada={id:uuid(),fecha:getVal('f-fecha'),periodo_etiqueta:'2025',centro:getVal('f-centro'),area:getVal('f-area'),servicio:getVal('f-servicio'),seccion_memoria:seccion,subseccion:getVal('f-subseccion'),tipo_contenido:tipo,titulo,contenido:recogerContenido(tipo),observaciones:getVal('f-observaciones'),autor:getVal('f-autor'),email_autor:usuarioActual?usuarioActual.email:'',fecha_registro:new Date().toISOString()};
-  try {
-    const json = await leerArchivoDrive();
-    json.entradas = json.entradas || [];
+  try{
+    const json = await leerDrive();
+    json.entradas = json.entradas||[];
     json.entradas.push(entrada);
     json.ultima_actualizacion = new Date().toISOString();
-    await guardarArchivoDrive(json);
+    await escribirDrive(json);
     allEntradas = json.entradas;
     document.getElementById('s-total').textContent = allEntradas.length;
     showToast('Guardado correctamente ✓','ok');
     limpiarFormulario();
-  } catch(e){showToast('Error al guardar en Drive','error');}
+  }catch(e){showToast('Error al guardar: '+e.message,'error');}
   btn.innerHTML='💾 Guardar en Drive';
   btn.disabled=false;
 }
@@ -435,6 +420,7 @@ function renderResumen(json){
 
 function renderEntradas(){
   const container=document.getElementById('entradas-container');
+  if(!container) return;
   const filtSec=document.getElementById('filter-seccion')?document.getElementById('filter-seccion').value:'';
   const filtCentro=document.getElementById('filter-centro')?document.getElementById('filter-centro').value:'';
   const filtTipo=document.getElementById('filter-tipo')?document.getElementById('filter-tipo').value:'';
@@ -466,7 +452,7 @@ function descargarMemoria(){
 function showToast(msg,tipo){
   const t=document.getElementById('toast');t.textContent=msg;
   t.className='toast show'+(tipo?' '+tipo:'');
-  setTimeout(()=>t.classList.remove('show'),3000);
+  setTimeout(()=>t.classList.remove('show'),3500);
 }
 
 (function(){
