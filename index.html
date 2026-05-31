@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memoria Enfermería HUVN</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --azul: #1a4f7a;
+    --azul-claro: #2d7ab5;
+    --azul-fondo: #e8f1f8;
+    --verde: #1d7a4f;
+    --gris: #f5f6f7;
+    --gris-borde: #dde2e8;
+    --texto: #1a1f2e;
+    --texto-suave: #5a6474;
+    --blanco: #ffffff;
+    --sombra: 0 2px 8px rgba(26,79,122,0.10);
+    --radio: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f4f8; color: var(--texto); min-height: 100vh; }
+
+  /* LOGIN */
+  #pantalla-login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a4f7a 0%, #2d7ab5 50%, #1d7a4f 100%);
+  }
+  .login-card {
+    background: var(--blanco);
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 420px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .login-logo {
+    width: 72px;
+    height: 72px;
+    background: var(--azul-fondo);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 32px;
+  }
+  .login-card h1 { font-size: 22px; font-weight: 700; color: var(--azul); margin-bottom: 4px; }
+  .login-card .subtitulo { font-size: 13px; color: var(--texto-suave); margin-bottom: 8px; }
+  .login-card .hospital { font-size: 12px; color: var(--texto-suave); margin-bottom: 32px; background: var(--gris); padding: 6px 12px; border-radius: 20px; display: inline-block; }
+  .login-info { font-size: 13px; color: var(--texto-suave); margin-top: 20px; line-height: 1.5; }
+  #google-btn-container { display: flex; justify-content: center; margin: 8px 0; }
+
+  /* APP */
+  #pantalla-app { display: none; min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: var(--azul);
+    color: white;
+    padding: 0 32px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header-izq { display: flex; align-items: center; gap: 12px; }
+  .header-logo { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .header-titulo { font-size: 15px; font-weight: 600; }
+  .header-subtitulo { font-size: 11px; opacity: 0.75; }
+  .header-der { display: flex; align-items: center; gap: 12px; }
+  .usuario-pill { background: rgba(255,255,255,0.15); border-radius: 20px; padding: 5px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+  .usuario-avatar { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+  .btn-salir { background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: background .2s; }
+  .btn-salir:hover { background: rgba(255,255,255,0.25); }
+
+  /* LAYOUT */
+  .layout { display: flex; min-height: calc(100vh - 60px); }
+  .sidebar {
+    width: 220px;
+    background: var(--blanco);
+    border-right: 1px solid var(--gris-borde);
+    padding: 20px 0;
+    flex-shrink: 0;
+  }
+  .sidebar-seccion { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--texto-suave); padding: 12px 20px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; font-size: 13px; color: var(--texto-suave);
+    cursor: pointer; transition: all .15s; border-left: 3px solid transparent;
+  }
+  .nav-item:hover { background: var(--azul-fondo); color: var(--azul); }
+  .nav-item.active { background: var(--azul-fondo); color: var(--azul); border-left-color: var(--azul); font-weight: 600; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* CONTENIDO */
+  .contenido { flex: 1; padding: 28px 32px; overflow-y: auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* TÍTULOS */
+  .page-title { font-size: 20px; font-weight: 700; color: var(--azul); margin-bottom: 4px; }
+  .page-subtitle { font-size: 13px; color: var(--texto-suave); margin-bottom: 24px; }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--blanco); border-radius: var(--radio); padding: 16px 20px; border: 1px solid var(--gris-borde); box-shadow: var(--sombra); }
+  .stat-num { font-size: 28px; font-weight: 700; color: var(--azul); }
+  .stat-label { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
+  .stat-card.verde .stat-num { color: var(--verde); }
+
+  /* FORMULARIO */
+  .form-card { background: var(--blanco); border-radius: var(--radio); padding: 24px 28px; border: 1px solid var(--gris-borde); box-shadow: var(--sombra); margin-bottom: 20px; }
+  .form-card h3 { font-size: 14px; font-weight: 600; color: var(--azul); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-borde); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.full { grid-template-columns: 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group.span2 { grid-column: span 2; }
+  label { font-size: 12px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .04em; }
+  input, select, textarea {
+    padding: 9px 12px; border: 1.5px solid var(--gris-borde); border-radius: 7px;
+    font-size: 14px; font-family: inherit; color: var(--texto);
+    transition: border-color .2s, box-shadow .2s; background: var(--blanco);
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--azul-claro);
+    box-shadow: 0 0 0 3px rgba(45,122,181,0.12);
+  }
+  textarea { resize: vertical; min-height: 88px; line-height: 1.5; }
+  .tipo-hint { font-size: 11px; color: var(--texto-suave); margin-top: 3px; font-style: italic; }
+  .campos-extra { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--gris-borde); }
+
+  /* BOTONES */
+  .btn-row { display: flex; gap: 10px; align-items: center; margin-top: 20px; }
+  .btn-primary {
+    background: var(--azul); color: white; border: none; padding: 10px 22px;
+    border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: background .2s, transform .1s; display: flex; align-items: center; gap: 7px;
+  }
+  .btn-primary:hover { background: var(--azul-claro); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-secondary {
+    background: var(--gris); color: var(--texto-suave); border: 1px solid var(--gris-borde);
+    padding: 10px 18px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: background .2s;
+  }
+  .btn-secondary:hover { background: var(--gris-borde); }
+  .btn-success { background: var(--verde); color: white; border: none; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+  .btn-success:hover { background: #165f3c; }
+
+  /* LISTA DE ENTRADAS */
+  .filtros { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filtros select { width: auto; flex: 1; min-width: 150px; font-size: 13px; padding: 7px 10px; }
+  .entrada-card {
+    background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: var(--radio);
+    padding: 14px 18px; margin-bottom: 10px; box-shadow: var(--sombra);
+    display: flex; align-items: flex-start; gap: 14px; transition: box-shadow .2s;
+  }
+  .entrada-card:hover { box-shadow: 0 4px 16px rgba(26,79,122,0.12); }
+  .entrada-tipo-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .entrada-body { flex: 1; }
+  .entrada-titulo { font-size: 14px; font-weight: 600; color: var(--texto); margin-bottom: 4px; }
+  .entrada-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 500; }
+  .badge-proyecto { background: #e6f1fb; color: #185fa5; }
+  .badge-formacion { background: #e1f5ee; color: #0f6e56; }
+  .badge-reconocimiento { background: #faeeda; color: #854f0b; }
+  .badge-indicador { background: #eaf3de; color: #3b6d11; }
+  .badge-texto { background: #f1efe8; color: #5f5e5a; }
+  .badge-publicacion { background: #fbeaf0; color: #993556; }
+  .badge-tabla { background: #eeedfe; color: #534ab7; }
+  .badge-lista { background: #faece7; color: #993c1d; }
+  .badge-gris { background: var(--gris); color: var(--texto-suave); }
+  .entrada-fecha { font-size: 11px; color: var(--texto-suave); white-space: nowrap; }
+  .seccion-tag { font-size: 11px; color: var(--texto-suave); margin-top: 4px; }
+
+  /* COBERTURA */
+  .cobertura-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+  .cov-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: 8px; font-size: 12px; }
+  .cov-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .cov-dot.ok { background: var(--verde); }
+  .cov-dot.vacio { background: var(--gris-borde); }
+  .cov-n { margin-left: auto; font-weight: 600; color: var(--azul); font-size: 12px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: var(--texto); color: white; padding: 12px 20px;
+    border-radius: 10px; font-size: 13px; font-weight: 500;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity .25s, transform .25s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.ok { background: var(--verde); }
+  .toast.error { background: #c0392b; }
+
+  /* SPINNER */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--texto-suave); }
+  .empty-state .icono { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.span2 { grid-column: span 1; }
+    .sidebar { display: none; }
+    .contenido { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA LOGIN -->
+<div id="pantalla-login">
+  <div class="login-card">
+    <div class="login-logo">🏥</div>
+    <h1>Memoria de Enfermería</h1>
+    <div class="subtitulo">Plataforma de gestión de datos</div>
+    <div class="hospital">Hospital Universitario Virgen de las Nieves · Granada</div>
+    <div id="google-btn-container"></div>
+    <div class="login-info">Accede con tu cuenta de Google del hospital o personal. Solo el personal autorizado puede iniciar sesión.</div>
+  </div>
+</div>
+
+<!-- PANTALLA APP -->
+<div id="pantalla-app">
+  <header class="header">
+    <div class="header-izq">
+      <div class="header-logo">🏥</div>
+      <div>
+        <div class="header-titulo">Memoria Anual de Enfermería</div>
+        <div class="header-subtitulo">HUVN · Dirección de Enfermería · 2025</div>
+      </div>
+    </div>
+    <div class="header-der">
+      <div class="usuario-pill">
+        <div class="usuario-avatar" id="user-inicial">?</div>
+        <span id="user-nombre">—</span>
+      </div>
+      <button class="btn-salir" onclick="cerrarSesion()">Salir</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar">
+      <div class="sidebar-seccion">Principal</div>
+      <div class="nav-item active" onclick="mostrarPanel('resumen', this)">
+        <span class="nav-icon">📊</span> Resumen
+      </div>
+      <div class="nav-item" onclick="mostrarPanel('anadir', this)">
+        <span class="nav-icon">➕</span> Añadir dato
+      </div>
+      <div class="nav-item" onclick="mostrarPanel('ver', this)">
+        <span class="nav-icon">📋</span> Ver datos
+      </div>
+      <div class="sidebar-seccion" style="margin-top:8px">Memoria</div>
+      <div class="nav-item" onclick="mostrarPanel('generar', this)">
+        <span class="nav-icon">📄</span> Generar memoria
+      </div>
+    </nav>
+
+    <main class="contenido">
+
+      <!-- PANEL RESUMEN -->
+      <div id="panel-resumen" class="panel active">
+        <div class="page-title">Resumen 2025</div>
+        <div class="page-subtitle">Estado actual de la recogida de datos para la Memoria Anual</div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-num" id="s-total">—</div><div class="stat-label">Entradas registradas</div></div>
+          <div class="stat-card verde"><div class="stat-num" id="s-secciones">—</div><div class="stat-label">Secciones con datos</div></div>
+          <div class="stat-card"><div class="stat-num" id="s-autores">—</div><div class="stat-label">Personas que han aportado</div></div>
+          <div class="stat-card"><div class="stat-num" id="s-ultima">—</div><div class="stat-label">Última actualización</div></div>
+        </div>
+        <div class="form-card">
+          <h3>Cobertura por sección</h3>
+          <div class="cobertura-grid" id="cobertura-grid">
+            <div class="empty-state"><div class="icono">⏳</div><p>Cargando...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL AÑADIR -->
+      <div id="panel-anadir" class="panel">
+        <div class="page-title">Añadir dato</div>
+        <div class="page-subtitle">Rellena los campos de arriba a abajo. Los campos cambian según el tipo de dato que elijas.</div>
+
+        <div class="form-card">
+          <h3>1. ¿A qué parte del hospital corresponde este dato?</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Centro hospitalario</label>
+              <select id="f-centro" onchange="updateArea()">
+                <option value="">Selecciona...</option>
+                <option>Hospital General</option>
+                <option>Hospital Materno-Infantil</option>
+                <option>Hospital Neurotraumatológico</option>
+                <option>Dirección de Enfermería</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Área de enfermería</label>
+              <select id="f-area" onchange="updateServicio()">
+                <option value="">Primero elige centro</option>
+              </select>
+            </div>
+            <div class="form-group span2">
+              <label>Servicio o unidad</label>
+              <select id="f-servicio">
+                <option value="">Primero elige área</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h3>2. ¿En qué sección de la memoria va este dato?</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Sección</label>
+              <select id="f-seccion" onchange="updateSubseccion()">
+                <option value="">Selecciona...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Apartado</label>
+              <select id="f-subseccion">
+                <option value="">Primero elige sección</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h3>3. ¿Qué tipo de dato es y cuál es su contenido?</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Tipo de dato</label>
+              <select id="f-tipo" onchange="updateCamposDinamicos()">
+                <option value="">Selecciona...</option>
+                <option value="texto_narrativo">Texto narrativo</option>
+                <option value="indicador_numerico">Indicador numérico</option>
+                <option value="proyecto">Proyecto</option>
+                <option value="formacion">Formación</option>
+                <option value="reconocimiento">Reconocimiento / Premio / Certificación</option>
+                <option value="publicacion">Publicación / Comunicación científica</option>
+                <option value="tabla">Tabla de datos</option>
+                <option value="lista">Lista de items</option>
+              </select>
+              <div class="tipo-hint" id="tipo-hint"></div>
+            </div>
+            <div class="form-group">
+              <label>Fecha del dato</label>
+              <input type="date" id="f-fecha" value="2025-12-31">
+            </div>
+            <div class="form-group span2">
+              <label>Título descriptivo</label>
+              <input type="text" id="f-titulo" placeholder="Describe brevemente qué es este dato...">
+            </div>
+          </div>
+          <div class="campos-extra" id="campos-dinamicos"></div>
+        </div>
+
+        <div class="form-card">
+          <h3>4. Datos de autoría</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nombre y cargo</label>
+              <input type="text" id="f-autor" placeholder="Se rellena automáticamente al iniciar sesión" readonly style="background:#f5f6f7">
+            </div>
+            <div class="form-group">
+              <label>Notas adicionales (opcional)</label>
+              <input type="text" id="f-observaciones" placeholder="Cualquier matiz o contexto adicional...">
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" onclick="guardarEntrada()" id="btn-guardar">
+            💾 Guardar en Drive
+          </button>
+          <button class="btn-secondary" onclick="limpiarFormulario()">Limpiar</button>
+          <span id="save-msg" style="font-size:13px;color:var(--texto-suave)"></span>
+        </div>
+      </div>
+
+      <!-- PANEL VER -->
+      <div id="panel-ver" class="panel">
+        <div class="page-title">Datos registrados</div>
+        <div class="page-subtitle">Todas las entradas de la memoria. Usa los filtros para encontrar lo que necesitas.</div>
+        <div class="filtros">
+          <select id="filter-seccion" onchange="renderEntradas()">
+            <option value="">Todas las secciones</option>
+          </select>
+          <select id="filter-centro" onchange="renderEntradas()">
+            <option value="">Todos los centros</option>
+            <option>Hospital General</option>
+            <option>Hospital Materno-Infantil</option>
+            <option>Hospital Neurotraumatológico</option>
+            <option>Dirección de Enfermería</option>
+          </select>
+          <select id="filter-tipo" onchange="renderEntradas()">
+            <option value="">Todos los tipos</option>
+            <option value="proyecto">Proyecto</option>
+            <option value="formacion">Formación</option>
+            <option value="reconocimiento">Reconocimiento</option>
+            <option value="indicador_numerico">Indicador numérico</option>
+            <option value="texto_narrativo">Texto narrativo</option>
+            <option value="publicacion">Publicación</option>
+            <option value="tabla">Tabla</option>
+            <option value="lista">Lista</option>
+          </select>
+        </div>
+        <div id="entradas-container">
+          <div class="empty-state"><div class="icono">⏳</div><p>Cargando datos...</p></div>
+        </div>
+      </div>
+
+      <!-- PANEL GENERAR -->
+      <div id="panel-generar" class="panel">
+        <div class="page-title">Generar memoria</div>
+        <div class="page-subtitle">Cuando estés listo, pulsa el botón para que Claude redacte la memoria completa a partir de todos los datos registrados.</div>
+        <div class="form-card">
+          <h3>Opciones de generación</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Período</label>
+              <select id="gen-periodo">
+                <option value="2025">Año completo 2025</option>
+                <option value="1T2025">Primer trimestre 2025</option>
+                <option value="2T2025">Segundo trimestre 2025</option>
+                <option value="3T2025">Tercer trimestre 2025</option>
+                <option value="4T2025">Cuarto trimestre 2025</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Alcance</label>
+              <select id="gen-alcance">
+                <option>Toda la Dirección de Enfermería</option>
+                <option>Solo Hospital General</option>
+                <option>Solo Área Médica</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-row" style="margin-top:16px">
+            <button class="btn-success" onclick="generarMemoria()">📄 Generar memoria completa</button>
+          </div>
+          <div style="margin-top:16px;font-size:13px;color:var(--texto-suave);background:var(--gris);padding:12px;border-radius:8px;">
+            <strong>¿Cómo funciona?</strong> Al pulsar, se envían todos los datos a Claude, que redacta la memoria en formato institucional. El resultado aparece abajo y puedes descargarlo como documento Word.
+          </div>
+        </div>
+        <div id="resultado-memoria" style="display:none" class="form-card">
+          <h3>Memoria generada</h3>
+          <div id="texto-memoria" style="font-size:14px;line-height:1.7;white-space:pre-wrap;max-height:600px;overflow-y:auto;padding:8px 0"></div>
+          <div class="btn-row" style="margin-top:16px">
+            <button class="btn-primary" onclick="descargarMemoria()">⬇️ Descargar como Word</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CLIENT_ID = '669232783014-5dc86g3p2djj0l39if0440vg5mc5g8cu.apps.googleusercontent.com';
+const FILE_ID = '13nyYan8MyOPdDKmMpGUwHYSINmQpGF7u';
+const USUARIOS_PERMITIDOS = ['javierrr72@gmail.com'];
+
+let usuarioActual = null;
+let allEntradas = [];
+let memoriaGenerada = '';
+
+const SECCIONES = {
+  '1. Presentación': ['1. Presentación'],
+  '2. Organización y Profesionales': ['2.1 Organigrama','2.2 Comisiones','2.3 Plantilla y dotación','2.4 Unidades y dispositivos'],
+  '3. Actividad y Cuidados': ['3.1 Actividad asistencial','3.2 Protocolos y planes de cuidados','3.3 Cartera de servicios','3.4 Gestión de casos y continuidad'],
+  '4. Calidad y Seguridad': ['4.1.1 Indicadores de seguridad','4.1.2 Indicadores de satisfacción','4.1.3 Indicadores de cuidados','4.2 Auditorías','4.3 Proyectos de mejora','4.4.1 Proyectos de humanización','4.4.2 Participación de familias','4.4.3 Voluntariado','4.4.4 Acción social'],
+  '5. Innovación y Transformación': ['5.1 Nuevas tecnologías','5.2 Digitalización del cuidado','5.3 Innovación organizativa','5.4 Proyectos estratégicos'],
+  '6. Docencia y Formación': ['6.1 Pregrado','6.2 Posgrado','6.3 EIR','6.4 Formación continuada'],
+  '7. Investigación': ['7.1 Artículos','7.2 Comunicaciones','7.3 Proyectos activos','7.4 Colaboraciones y alianzas'],
+  '8. Reconocimientos y Premios': ['8.1 Reconocimientos institucionales','8.2 Premios profesionales','8.3 Certificaciones'],
+  '9. Proyectos Relevantes': ['9. Proyectos relevantes del año'],
+  '10. Retos y Líneas de Acción': ['10.1 Retos estratégicos','10.2 Objetivos operativos','10.3 Programas prioritarios','10.4 Conclusiones finales']
+};
+
+const TIPO_HINTS = {
+  texto_narrativo:'Para párrafos descriptivos, logros narrativos o cualquier texto libre.',
+  indicador_numerico:'Para cifras concretas: tasas, tiempos, porcentajes, volúmenes.',
+  proyecto:'Para describir un proyecto: qué es, estado, responsable y resultados.',
+  formacion:'Para cursos, sesiones, congresos o cualquier actividad formativa.',
+  reconocimiento:'Para premios, certificaciones o reconocimientos institucionales.',
+  publicacion:'Para artículos, comunicaciones o pósters científicos.',
+  tabla:'Para datos en formato tabla (pega separado por tabuladores).',
+  lista:'Para listados de items (uno por línea).'
+};
+
+const AREAS = {
+  'Hospital General':['Área Médica','Área de Críticos','Área de Salud Mental','Dirección de Enfermería'],
+  'Hospital Materno-Infantil':['Área Materno-Infantil','Dirección de Enfermería'],
+  'Hospital Neurotraumatológico':['Área Neurotraumatológica','Dirección de Enfermería'],
+  'Dirección de Enfermería':['Dirección de Enfermería']
+};
+
+const SERVICIOS = {
+  'Área Médica':['Hematología','Medicina Interna','Enfermedades Infecciosas','Digestivo','Cardiología','Oncología','Nefrología','Reumatología','Neumología','Hospital de Día Polivalente','Módulo Penitenciario','UAV y Terapia IV','Global Área Médica'],
+  'Área de Críticos':['Urgencias','Medicina Intensiva','Global Área Críticos'],
+  'Área de Salud Mental':['Unidad de Agudos','Unidad TCA','Unidad Infanto-Juvenil','Comunidad Terapéutica','Equipos Salud Mental Comunitaria','Hospital de Día Adultos','Programa ETIC','Global Área Salud Mental'],
+  'Área Materno-Infantil':['Global Área Materno-Infantil'],
+  'Área Neurotraumatológica':['Global Área Neurotraumatológica'],
+  'Dirección de Enfermería':['Global Hospital / Dirección']
+};
+
+const CAMPOS_EXTRA = {
+  indicador_numerico:`<div class="form-grid"><div class="form-group"><label>Valor</label><input type="text" id="f-valor" placeholder="Ej: 3.2"></div><div class="form-group"><label>Unidad</label><input type="text" id="f-unidad" placeholder="Ej: horas, %"></div><div class="form-group span2"><label>Qué mide este indicador</label><textarea id="f-definicion" style="min-height:60px" placeholder="Descripción breve..."></textarea></div><div class="form-group span2"><label>Fuente del dato</label><input type="text" id="f-fuente" placeholder="Ej: Dashboard Gestión Camas, Diraya..."></div></div>`,
+  proyecto:`<div class="form-grid"><div class="form-group"><label>Estado</label><select id="f-estado"><option>En marcha</option><option>Completado</option><option>Planificado</option></select></div><div class="form-group"><label>Responsable</label><input type="text" id="f-responsable" placeholder="Nombre y cargo"></div><div class="form-group span2"><label>Descripción del proyecto</label><textarea id="f-descripcion" placeholder="Qué es, qué objetivo tiene, cómo se desarrolla..."></textarea></div><div class="form-group span2"><label>Resultados o próximos pasos</label><textarea id="f-resultados" style="min-height:60px" placeholder="Logros conseguidos o pasos previstos..."></textarea></div></div>`,
+  formacion:`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="f-tipo-form"><option>Formación continuada</option><option>Pregrado</option><option>Posgrado</option><option>EIR</option><option>Formación externa</option><option>Congreso / Jornada</option></select></div><div class="form-group"><label>Nº de profesionales formados</label><input type="number" id="f-num-prof" placeholder="0"></div><div class="form-group span2"><label>Destinatarios / Entidad</label><input type="text" id="f-entidad" placeholder="Ej: Unidades del HUVN, Hospital de Melilla..."></div><div class="form-group span2"><label>Descripción de la actividad</label><textarea id="f-descripcion" style="min-height:60px" placeholder="En qué consistió..."></textarea></div></div>`,
+  reconocimiento:`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="f-tipo-rec"><option>Certificación</option><option>Premio profesional</option><option>Reconocimiento institucional</option></select></div><div class="form-group"><label>Organismo que lo otorga</label><input type="text" id="f-organismo" placeholder="Ej: SEINAV, Junta de Andalucía..."></div><div class="form-group span2"><label>Descripción</label><textarea id="f-descripcion" placeholder="En qué consiste, qué reconoce, vigencia..."></textarea></div></div>`,
+  publicacion:`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="f-tipo-pub"><option>Artículo</option><option>Comunicación oral</option><option>Póster</option><option>Capítulo de libro</option></select></div><div class="form-group"><label>Autores</label><input type="text" id="f-autores" placeholder="Apellido A, Apellido B, et al."></div><div class="form-group"><label>Revista o congreso</label><input type="text" id="f-revista" placeholder="Nombre..."></div><div class="form-group"><label>DOI o referencia</label><input type="text" id="f-doi" placeholder="doi:10.xxxx/..."></div></div>`,
+  texto_narrativo:`<div class="form-group"><label>Contenido</label><textarea id="f-contenido" style="min-height:120px" placeholder="Escribe el texto que quieres incluir en la memoria..."></textarea></div>`,
+  tabla:`<div class="form-grid"><div class="form-group span2"><label>Descripción de la tabla</label><input type="text" id="f-descripcion" placeholder="Qué muestra esta tabla..."></div><div class="form-group span2"><label>Datos (una fila por línea, columnas separadas por tabulador)</label><textarea id="f-contenido" style="min-height:100px" placeholder="Columna1&#9;Columna2&#9;Columna3&#10;Dato1&#9;Dato2&#9;Dato3"></textarea></div></div>`,
+  lista:`<div class="form-group"><label>Items (uno por línea)</label><textarea id="f-contenido" style="min-height:100px" placeholder="Item 1&#10;Item 2&#10;Item 3..."></textarea></div>`
+};
+
+const TIPO_COLORES = {
+  proyecto:'#2d7ab5', formacion:'#1d9e75', reconocimiento:'#ef9f27',
+  indicador_numerico:'#639922', texto_narrativo:'#888780',
+  publicacion:'#d4537e', tabla:'#7f77dd', lista:'#d85a30'
+};
+
+// GOOGLE LOGIN
+window.onload = function() {
+  google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback: handleCredentialResponse,
+    auto_select: false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('google-btn-container'),
+    { theme: 'outline', size: 'large', text: 'signin_with', locale: 'es', width: 280 }
+  );
+};
+
+function parseJwt(token) {
+  try { return JSON.parse(atob(token.split('.')[1])); } catch(e) { return null; }
+}
+
+function handleCredentialResponse(response) {
+  const payload = parseJwt(response.credential);
+  if (!payload) { showToast('Error al iniciar sesión', 'error'); return; }
+  usuarioActual = { email: payload.email, nombre: payload.name, foto: payload.picture, token: response.credential };
+  document.getElementById('user-nombre').textContent = payload.name.split(' ')[0];
+  document.getElementById('user-inicial').textContent = payload.name.charAt(0).toUpperCase();
+  document.getElementById('f-autor').value = payload.name + ' — ' + payload.email;
+  document.getElementById('pantalla-login').style.display = 'none';
+  document.getElementById('pantalla-app').style.display = 'block';
+  cargarDatos();
+  showToast('Bienvenido/a, ' + payload.name.split(' ')[0] + ' ✓', 'ok');
+}
+
+function cerrarSesion() {
+  google.accounts.id.disableAutoSelect();
+  usuarioActual = null;
+  document.getElementById('pantalla-login').style.display = 'flex';
+  document.getElementById('pantalla-app').style.display = 'none';
+}
+
+function mostrarPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'ver') renderEntradas();
+}
+
+function updateArea() {
+  const c = document.getElementById('f-centro').value;
+  const s = document.getElementById('f-area');
+  s.innerHTML = '<option value="">Selecciona área...</option>' + (AREAS[c]||[]).map(a=>`<option>${a}</option>`).join('');
+  document.getElementById('f-servicio').innerHTML = '<option value="">Selecciona servicio...</option>';
+}
+function updateServicio() {
+  const a = document.getElementById('f-area').value;
+  const s = document.getElementById('f-servicio');
+  s.innerHTML = '<option value="">Selecciona servicio...</option>' + (SERVICIOS[a]||[]).map(x=>`<option>${x}</option>`).join('');
+}
+function updateSubseccion() {
+  const sec = document.getElementById('f-seccion').value;
+  const s = document.getElementById('f-subseccion');
+  s.innerHTML = '<option value="">Selecciona apartado...</option>' + (SECCIONES[sec]||[]).map(o=>`<option>${o}</option>`).join('');
+}
+function updateCamposDinamicos() {
+  const tipo = document.getElementById('f-tipo').value;
+  document.getElementById('campos-dinamicos').innerHTML = CAMPOS_EXTRA[tipo] || '';
+  document.getElementById('tipo-hint').textContent = TIPO_HINTS[tipo] || '';
+}
+
+function getVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+function recogerContenido(tipo) {
+  const m = {};
+  if(tipo==='indicador_numerico'){m.valor=getVal('f-valor');m.unidad=getVal('f-unidad');m.definicion=getVal('f-definicion');m.fuente=getVal('f-fuente');}
+  else if(tipo==='proyecto'){m.estado=getVal('f-estado');m.descripcion=getVal('f-descripcion');m.responsable=getVal('f-responsable');m.resultados=getVal('f-resultados');}
+  else if(tipo==='formacion'){m.tipo_formacion=getVal('f-tipo-form');m.num_profesionales=getVal('f-num-prof');m.entidad=getVal('f-entidad');m.descripcion=getVal('f-descripcion');}
+  else if(tipo==='reconocimiento'){m.tipo_rec=getVal('f-tipo-rec');m.organismo=getVal('f-organismo');m.descripcion=getVal('f-descripcion');}
+  else if(tipo==='publicacion'){m.tipo_pub=getVal('f-tipo-pub');m.autores=getVal('f-autores');m.revista=getVal('f-revista');m.doi=getVal('f-doi');}
+  else if(tipo==='texto_narrativo'){m.contenido=getVal('f-contenido');}
+  else if(tipo==='tabla'){m.descripcion=getVal('f-descripcion');m.contenido=getVal('f-contenido');}
+  else if(tipo==='lista'){m.items=getVal('f-contenido').split('\n').filter(l=>l.trim());}
+  return m;
+}
+
+function uuid(){ return 'id-'+Date.now()+'-'+Math.random().toString(36).substr(2,9); }
+
+function limpiarFormulario() {
+  ['f-centro','f-area','f-servicio','f-seccion','f-subseccion','f-tipo'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  ['f-titulo','f-observaciones'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-fecha').value='2025-12-31';
+  document.getElementById('campos-dinamicos').innerHTML='';
+  document.getElementById('tipo-hint').textContent='';
+  document.getElementById('f-area').innerHTML='<option value="">Primero elige centro</option>';
+  document.getElementById('f-servicio').innerHTML='<option value="">Primero elige área</option>';
+  document.getElementById('f-subseccion').innerHTML='<option value="">Primero elige sección</option>';
+}
+
+async function guardarEntrada() {
+  const titulo = getVal('f-titulo').trim();
+  const tipo = getVal('f-tipo');
+  const seccion = getVal('f-seccion');
+  if(!titulo||!tipo||!seccion){ showToast('Rellena título, tipo y sección', 'error'); return; }
+  const btn = document.getElementById('btn-guardar');
+  btn.innerHTML = '<span class="spinner"></span> Guardando...';
+  btn.disabled = true;
+  const entrada = {
+    id: uuid(), fecha: getVal('f-fecha'), periodo_etiqueta: '2025',
+    centro: getVal('f-centro'), area: getVal('f-area'), servicio: getVal('f-servicio'),
+    seccion_memoria: seccion, subseccion: getVal('f-subseccion'),
+    tipo_contenido: tipo, titulo, contenido: recogerContenido(tipo),
+    observaciones: getVal('f-observaciones'), autor: getVal('f-autor'),
+    email_autor: usuarioActual ? usuarioActual.email : '',
+    fecha_registro: new Date().toISOString()
+  };
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Lee el archivo JSON de Google Drive con el ID dado. Añade la nueva entrada al array "entradas". Actualiza "ultima_actualizacion". Guarda el archivo actualizado. Responde SOLO con JSON: {"ok":true,"total":N}',messages:[{role:'user',content:JSON.stringify({file_id:FILE_ID,nueva_entrada:entrada})}],mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'google-drive'}]})});
+    const data = await res.json();
+    const tb = data.content && data.content.find(b=>b.type==='text');
+    let result = null;
+    if(tb){try{result=JSON.parse(tb.text.replace(/```json|```/g,'').trim());}catch(e){}}
+    if(result&&result.ok){
+      allEntradas.push(entrada);
+      document.getElementById('s-total').textContent = result.total || allEntradas.length;
+      showToast('Guardado correctamente ✓', 'ok');
+      limpiarFormulario();
+    } else { showToast('Guardado con aviso — verifica Drive', ''); }
+  } catch(e) { showToast('Error de conexión', 'error'); }
+  btn.innerHTML = '💾 Guardar en Drive';
+  btn.disabled = false;
+}
+
+async function cargarDatos() {
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:'Lee el archivo de Google Drive con el ID dado. Devuelve su contenido JSON completo. SOLO el JSON, sin texto adicional ni bloques de código.',messages:[{role:'user',content:'Lee el archivo con ID: '+FILE_ID}],mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'google-drive'}]})});
+    const data = await res.json();
+    const tb = data.content && data.content.find(b=>b.type==='text');
+    if(tb){
+      try {
+        const json = JSON.parse(tb.text.replace(/```json|```/g,'').trim());
+        allEntradas = json.entradas || [];
+        renderResumen(json);
+        renderEntradas();
+      } catch(e) {}
+    }
+  } catch(e) {}
+}
+
+function renderResumen(json) {
+  const entradas = json.entradas || [];
+  const secsConDatos = new Set(entradas.map(e=>e.seccion_memoria).filter(Boolean));
+  const autores = new Set(entradas.map(e=>e.email_autor||e.autor).filter(Boolean));
+  document.getElementById('s-total').textContent = entradas.length;
+  document.getElementById('s-secciones').textContent = secsConDatos.size + ' / ' + Object.keys(SECCIONES).length;
+  document.getElementById('s-autores').textContent = autores.size || '—';
+  document.getElementById('s-ultima').textContent = json.ultima_actualizacion ? json.ultima_actualizacion.slice(0,10) : '—';
+  const grid = document.getElementById('cobertura-grid');
+  grid.innerHTML = Object.keys(SECCIONES).map(sec => {
+    const tiene = secsConDatos.has(sec);
+    const n = entradas.filter(e=>e.seccion_memoria===sec).length;
+    return `<div class="cov-item"><div class="cov-dot ${tiene?'ok':'vacio'}"></div><span style="flex:1">${sec}</span>${tiene?`<span class="cov-n">${n}</span>`:'<span style="font-size:11px;color:var(--gris-borde)">vacío</span>'}</div>`;
+  }).join('');
+}
+
+function renderEntradas() {
+  const container = document.getElementById('entradas-container');
+  const filtSec = document.getElementById('filter-seccion')?document.getElementById('filter-seccion').value:'';
+  const filtCentro = document.getElementById('filter-centro')?document.getElementById('filter-centro').value:'';
+  const filtTipo = document.getElementById('filter-tipo')?document.getElementById('filter-tipo').value:'';
+  const seccSel = document.getElementById('filter-seccion');
+  if(seccSel && seccSel.options.length < 3) {
+    const secs = [...new Set(allEntradas.map(e=>e.seccion_memoria).filter(Boolean))];
+    seccSel.innerHTML = '<option value="">Todas las secciones</option>' + secs.map(s=>`<option value="${s}">${s}</option>`).join('');
+  }
+  let filtered = allEntradas.filter(e=>(!filtSec||e.seccion_memoria===filtSec)&&(!filtCentro||e.centro===filtCentro)&&(!filtTipo||e.tipo_contenido===filtTipo));
+  if(!filtered.length){container.innerHTML='<div class="empty-state"><div class="icono">📭</div><p>No hay entradas para este filtro.</p></div>';return;}
+  container.innerHTML = filtered.map(e=>`
+    <div class="entrada-card">
+      <div class="entrada-tipo-dot" style="background:${TIPO_COLORES[e.tipo_contenido]||'#ccc'}"></div>
+      <div class="entrada-body">
+        <div class="entrada-titulo">${e.titulo||'(sin título)'}</div>
+        <div class="entrada-meta">
+          <span class="badge badge-${e.tipo_contenido}">${e.tipo_contenido||'—'}</span>
+          ${e.centro?`<span class="badge badge-gris">${e.centro}</span>`:''}
+          ${e.servicio?`<span class="badge badge-gris">${e.servicio}</span>`:''}
+        </div>
+        <div class="seccion-tag">${e.seccion_memoria||''}${e.subseccion?' › '+e.subseccion:''}</div>
+      </div>
+      <div class="entrada-fecha">${e.fecha||''}<br><span style="color:var(--texto-suave)">${e.autor?e.autor.split('—')[0].trim().split(' ')[0]:''}</span></div>
+    </div>`).join('');
+}
+
+async function generarMemoria() {
+  const btn = event.target;
+  btn.textContent = 'Generando...';
+  btn.disabled = true;
+  showToast('Generando memoria, esto puede tardar unos segundos...');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:8000,system:'Eres un experto en documentación institucional sanitaria. Genera la Memoria Anual de Actividad de Enfermería del HUVN 2025 en formato institucional, con prosa cohesiva y profesional. Organiza por secciones. Para secciones sin datos indica "Sin actividad registrada para este período".',messages:[{role:'user',content:'Genera la memoria con estos datos: ' + JSON.stringify(allEntradas)}]})});
+    const data = await res.json();
+    const tb = data.content && data.content.find(b=>b.type==='text');
+    if(tb){
+      memoriaGenerada = tb.text;
+      document.getElementById('texto-memoria').textContent = tb.text;
+      document.getElementById('resultado-memoria').style.display = 'block';
+      showToast('Memoria generada ✓', 'ok');
+    }
+  } catch(e) { showToast('Error al generar. Intenta de nuevo.', 'error'); }
+  btn.textContent = '📄 Generar memoria completa';
+  btn.disabled = false;
+}
+
+function descargarMemoria() {
+  const blob = new Blob([memoriaGenerada], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Memoria_Enfermeria_HUVN_2025.txt';
+  a.click();
+}
+
+function showToast(msg, tipo) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (tipo?' '+tipo:'');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// Init secciones
+(function(){
+  const sel = document.getElementById('f-seccion');
+  Object.keys(SECCIONES).forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+})();
+</script>
+</body>
+</html>
