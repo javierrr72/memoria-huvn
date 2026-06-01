@@ -137,8 +137,8 @@
       <div class="nav-item active" onclick="mostrarPanel('resumen',this)"><span class="nav-icon">📊</span> Resumen</div>
       <div class="nav-item" onclick="mostrarPanel('anadir',this)"><span class="nav-icon">➕</span> Añadir dato</div>
       <div class="nav-item" onclick="mostrarPanel('ver',this)"><span class="nav-icon">📋</span> Ver datos</div>
-      <div class="sidebar-seccion" style="margin-top:8px">Memoria</div>
-      <div class="nav-item" onclick="mostrarPanel('generar',this)"><span class="nav-icon">📄</span> Generar memoria</div>
+      <div class="sidebar-seccion" style="margin-top:8px;display:none" id="nav-memoria-seccion">Memoria</div>
+      <div class="nav-item" onclick="mostrarPanel('generar',this)" style="display:none" id="nav-generar"><span class="nav-icon">📄</span> Generar memoria</div>
     </nav>
     <main class="contenido">
 
@@ -259,6 +259,7 @@
 <script>
 const CLIENT_ID = '669232783014-5dc86g3p2djj0l39if0440vg5mc5g8cu.apps.googleusercontent.com';
 const SHEET_NAME = 'Memoria Enfermería HUVN 2025';
+const ADMINS = ['javierrr72@gmail.com','mercedesvillegas76@gmail.com','mariajrj1810@gmail.com'];
 const SCOPE = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
 let accessToken = null;
@@ -321,6 +322,11 @@ async function iniciarSesion(){
         document.getElementById('pantalla-login').style.display = 'none';
         document.getElementById('pantalla-app').style.display = 'block';
         showToast('Bienvenido/a, '+info.name.split(' ')[0]+' ✓','ok');
+        // Control de acceso por rol
+        if(ADMINS.includes(info.email)){
+          document.getElementById('nav-generar').style.display = 'flex';
+          document.getElementById('nav-memoria-seccion').style.display = 'block';
+        }
         await inicializarSheet();
       }catch(e){showToast('Error: '+e.message,'error');}
     }
