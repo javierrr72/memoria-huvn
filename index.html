@@ -347,6 +347,13 @@ async function iniciarSesion(){
         showToast('Bienvenido/a, '+info.name.split(' ')[0]+' ✓','ok');
 
         await inicializarSheet();
+        // Mostrar solicitar memoria solo a usuarios autorizados
+        if(SOLICITANTES.includes(info.email)){
+          const navSolicitar = document.getElementById('nav-solicitar');
+          const navSeccion = document.getElementById('nav-memoria-seccion');
+          if(navSolicitar) navSolicitar.style.display = 'flex';
+          if(navSeccion) navSeccion.style.display = 'block';
+        }
       }catch(e){showToast('Error: '+e.message,'error');}
     }
   });
