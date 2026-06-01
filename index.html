@@ -155,7 +155,7 @@
             <input type="date" id="filtro-hasta" style="padding:8px 12px;border:1.5px solid var(--gris-borde);border-radius:7px;font-size:14px;font-family:inherit" onchange="aplicarFiltroFecha()">
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button onclick="setFiltroRapido('año')" class="btn-filtro" id="btn-año">2025</button>
+            <button onclick="setFiltroRapido('año')" class="btn-filtro" id="btn-año">Año completo</button>
             <button onclick="setFiltroRapido('t1')" class="btn-filtro">1T</button>
             <button onclick="setFiltroRapido('t2')" class="btn-filtro">2T</button>
             <button onclick="setFiltroRapido('t3')" class="btn-filtro">3T</button>
@@ -408,16 +408,7 @@ async function inicializarSheet(){
 }
 
 async function cargarDatos(){
-  // Set default year filter to current data year
-  const hoy = new Date();
-  const anio = '2025';
-  if(document.getElementById('filtro-desde') && !document.getElementById('filtro-desde').value){
-    document.getElementById('filtro-desde').value = anio+'-01-01';
-    document.getElementById('filtro-hasta').value = anio+'-12-31';
-    document.getElementById('filter-desde') && (document.getElementById('filter-desde').value = anio+'-01-01');
-    document.getElementById('filter-hasta') && (document.getElementById('filter-hasta').value = anio+'-12-31');
-    document.getElementById('btn-año') && document.getElementById('btn-año').classList.add('activo');
-  }
+  // El filtro empieza vacío (muestra todo) hasta que el usuario elija
   try{
     const data = await apiSheets(`/${sheetId}/values/Datos!A2:O10000`);
     const filas = data.values || [];
@@ -637,10 +628,10 @@ function toggleDetalle(i){
 function setFiltroRapido(tipo){
   document.querySelectorAll('.btn-filtro').forEach(b=>b.classList.remove('activo'));
   event.target.classList.add('activo');
-  const year = new Date().getFullYear();
-  const y = '2025'; // año base de datos
   const desde = document.getElementById('filtro-desde');
   const hasta = document.getElementById('filtro-hasta');
+  // Usar el año que ya está en el campo desde, o el de los datos (el más reciente)
+  let y = desde.value ? desde.value.slice(0,4) : obtenerAnioReciente();
   if(tipo==='año'){desde.value=y+'-01-01';hasta.value=y+'-12-31';}
   else if(tipo==='t1'){desde.value=y+'-01-01';hasta.value=y+'-03-31';}
   else if(tipo==='t2'){desde.value=y+'-04-01';hasta.value=y+'-06-30';}
@@ -648,6 +639,12 @@ function setFiltroRapido(tipo){
   else if(tipo==='t4'){desde.value=y+'-10-01';hasta.value=y+'-12-31';}
   else if(tipo==='todo'){desde.value='';hasta.value='';}
   aplicarFiltroFecha();
+}
+
+function obtenerAnioReciente(){
+  if(allEntradas.length === 0) return new Date().getFullYear().toString();
+  const fechas = allEntradas.map(e=>e.fecha).filter(Boolean).sort();
+  return fechas[fechas.length-1].slice(0,4);
 }
 
 function aplicarFiltroFecha(){
