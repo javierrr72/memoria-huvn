@@ -138,7 +138,8 @@
       <div class="nav-item" onclick="mostrarPanel('anadir',this)"><span class="nav-icon">➕</span> Añadir dato</div>
       <div class="nav-item" onclick="mostrarPanel('ver',this)"><span class="nav-icon">📋</span> Ver datos</div>
       <div class="sidebar-seccion" style="margin-top:8px;display:none" id="nav-memoria-seccion">Memoria</div>
-      <div class="nav-item" onclick="mostrarPanel('generar',this)" style="display:none" id="nav-generar"><span class="nav-icon">📄</span> Generar memoria</div>
+      <div class="nav-item" onclick="mostrarPanel('solicitar',this)" style="display:none" id="nav-solicitar"><span class="nav-icon">📄</span> Solicitar memoria</div>
+
     </nav>
     <main class="contenido">
 
@@ -228,24 +229,44 @@
         <div id="entradas-container"><div class="empty-state"><div class="icono">⏳</div><p>Cargando datos...</p></div></div>
       </div>
 
-      <div id="panel-generar" class="panel">
-        <div class="page-title">Generar memoria</div>
-        <div class="page-subtitle">Claude redactará la memoria completa a partir de todos los datos registrados.</div>
+      <div id="panel-solicitar" class="panel">
+        <div class="page-title">Solicitar generación de memoria</div>
+        <div class="page-subtitle">Rellena el formulario y Javier recibirá tu solicitud por email para elaborar la memoria.</div>
         <div class="form-card">
-          <h3>Opciones</h3>
+          <h3>Parámetros de la memoria</h3>
           <div class="form-grid">
-            <div class="form-group"><label>Período</label><select><option>Año completo 2025</option></select></div>
-            <div class="form-group"><label>Alcance</label><select><option>Toda la Dirección de Enfermería</option><option>Solo Hospital General</option><option>Solo Área Médica</option></select></div>
+            <div class="form-group">
+              <label>Fecha desde</label>
+              <input type="date" id="sol-desde" value="2025-01-01">
+            </div>
+            <div class="form-group">
+              <label>Fecha hasta</label>
+              <input type="date" id="sol-hasta" value="2025-12-31">
+            </div>
+            <div class="form-group span2">
+              <label>Alcance</label>
+              <select id="sol-alcance">
+                <option>Memoria completa — Toda la Dirección de Enfermería</option>
+                <option>Solo Hospital General</option>
+                <option>Solo Área Médica</option>
+                <option>Solo Área de Críticos</option>
+                <option>Solo Área de Salud Mental</option>
+                <option>Solo Hospital Materno-Infantil</option>
+                <option>Solo Hospital Neurotraumatológico</option>
+              </select>
+            </div>
+            <div class="form-group span2">
+              <label>Observaciones o instrucciones adicionales (opcional)</label>
+              <textarea id="sol-observaciones" style="min-height:80px" placeholder="Ej: incluir comparativa con año anterior, destacar sección de formación, formato para Junta de Dirección..."></textarea>
+            </div>
           </div>
           <div class="btn-row" style="margin-top:16px">
-            <button class="btn-success" onclick="generarMemoria()">📄 Generar memoria completa</button>
+            <button class="btn-primary" onclick="enviarSolicitud()" id="btn-solicitar">
+              📧 Enviar solicitud
+            </button>
           </div>
-        </div>
-        <div id="resultado-memoria" style="display:none" class="form-card">
-          <h3>Memoria generada</h3>
-          <div id="texto-memoria" style="font-size:14px;line-height:1.7;white-space:pre-wrap;max-height:600px;overflow-y:auto;padding:8px 0"></div>
-          <div class="btn-row" style="margin-top:16px">
-            <button class="btn-primary" onclick="descargarMemoria()">⬇️ Descargar</button>
+          <div style="margin-top:16px;font-size:13px;color:var(--texto-suave);background:var(--gris);padding:12px;border-radius:8px;">
+            La solicitud llegará a <strong>javierrr72@gmail.com</strong>. La memoria se elaborará y se os enviará en el menor tiempo posible.
           </div>
         </div>
       </div>
@@ -259,14 +280,16 @@
 <script>
 const CLIENT_ID = '669232783014-5dc86g3p2djj0l39if0440vg5mc5g8cu.apps.googleusercontent.com';
 const SHEET_NAME = 'Memoria Enfermería HUVN 2025';
-const ADMINS = ['javierrr72@gmail.com','mercedesvillegas76@gmail.com','mariajrj1810@gmail.com'];
+const EMAILJS_SERVICE = 'service_e7vnayx';
+const EMAILJS_TEMPLATE = 'bf0ilce';
+const EMAILJS_KEY = 'uxYw90xt1YIYYvpng';
+const SOLICITANTES = ['javierrr72@gmail.com','mercedesvillegas76@gmail.com','mariajrj1810@gmail.com','pilucagv@gmail.com','rivasmaite1981@gmail.com','matisanchez.1968@gmail.com'];
 const SCOPE = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
 let accessToken = null;
 let usuarioActual = null;
 let sheetId = null;
 let allEntradas = [];
-let memoriaGenerada = '';
 
 // Cabeceras de la hoja
 const HEADERS = ['id','fecha','periodo_etiqueta','centro','area','servicio','seccion_memoria','subseccion','tipo_contenido','titulo','contenido_json','observaciones','autor','email_autor','fecha_registro'];
@@ -322,11 +345,7 @@ async function iniciarSesion(){
         document.getElementById('pantalla-login').style.display = 'none';
         document.getElementById('pantalla-app').style.display = 'block';
         showToast('Bienvenido/a, '+info.name.split(' ')[0]+' ✓','ok');
-        // Control de acceso por rol
-        if(ADMINS.includes(info.email)){
-          document.getElementById('nav-generar').style.display = 'flex';
-          document.getElementById('nav-memoria-seccion').style.display = 'block';
-        }
+
         await inicializarSheet();
       }catch(e){showToast('Error: '+e.message,'error');}
     }
@@ -608,22 +627,10 @@ function renderEntradas(){
   }).join('');
 }
 
-async function generarMemoria(){
-  const btn=event.target;btn.textContent='Generando...';btn.disabled=true;
-  showToast('Generando memoria, puede tardar unos segundos...');
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:8000,system:'Eres experto en documentación institucional sanitaria. Genera la Memoria Anual de Actividad de Enfermería del HUVN 2025 en formato institucional, con prosa cohesiva y profesional. Organiza por secciones. Para secciones sin datos indica "Sin actividad registrada para este período".',messages:[{role:'user',content:'Genera la memoria con estos datos: '+JSON.stringify(allEntradas)}]})});
-    const data=await res.json();
-    const tb=data.content&&data.content.find(b=>b.type==='text');
-    if(tb){memoriaGenerada=tb.text;document.getElementById('texto-memoria').textContent=tb.text;document.getElementById('resultado-memoria').style.display='block';showToast('Memoria generada ✓','ok');}
   }catch(e){showToast('Error al generar','error');}
   btn.textContent='📄 Generar memoria completa';btn.disabled=false;
 }
 
-function descargarMemoria(){
-  const blob=new Blob([memoriaGenerada],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Memoria_Enfermeria_HUVN_2025.txt';a.click();
-}
 
 
 function toggleDetalle(i){
@@ -682,6 +689,32 @@ function filtrarPorFecha(entradas, desde, hasta){
   });
 }
 
+async function enviarSolicitud(){
+  const btn = document.getElementById('btn-solicitar');
+  btn.innerHTML = '<span class="spinner"></span> Enviando...';
+  btn.disabled = true;
+  const desde = document.getElementById('sol-desde').value;
+  const hasta = document.getElementById('sol-hasta').value;
+  const alcance = document.getElementById('sol-alcance').value;
+  const obs = document.getElementById('sol-observaciones').value;
+  const periodo = desde + ' → ' + hasta;
+  try {
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      from_name: usuarioActual.nombre,
+      from_email: usuarioActual.email,
+      periodo: periodo,
+      alcance: alcance,
+      observaciones: obs || 'Sin observaciones adicionales'
+    });
+    showToast('Solicitud enviada correctamente ✓', 'ok');
+    document.getElementById('sol-observaciones').value = '';
+  } catch(e) {
+    showToast('Error al enviar: ' + e.text || e.message, 'error');
+  }
+  btn.innerHTML = '📧 Enviar solicitud';
+  btn.disabled = false;
+}
+
 function showToast(msg,tipo){
   const t=document.getElementById('toast');t.textContent=msg;
   t.className='toast show'+(tipo?' '+tipo:'');
@@ -694,5 +727,7 @@ function showToast(msg,tipo){
 })();
 </script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("uxYw90xt1YIYYvpng");</script>
 </body>
 </html>
