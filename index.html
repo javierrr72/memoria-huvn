@@ -62,7 +62,13 @@
   .btn-success{background:var(--verde);color:white;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
   .filtros{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
   .filtros select{width:auto;flex:1;min-width:150px;font-size:13px;padding:7px 10px}
-  .entrada-card{background:var(--blanco);border:1px solid var(--gris-borde);border-radius:var(--radio);padding:14px 18px;margin-bottom:10px;box-shadow:var(--sombra);display:flex;align-items:flex-start;gap:14px}
+  .entrada-card{background:var(--blanco);border:1px solid var(--gris-borde);border-radius:var(--radio);padding:14px 18px;margin-bottom:10px;box-shadow:var(--sombra);cursor:pointer;transition:box-shadow .2s}
+  .entrada-card:hover{box-shadow:0 4px 16px rgba(26,79,122,0.12)}
+  .entrada-top{display:flex;align-items:flex-start;gap:14px}
+  .entrada-detalle{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--gris-borde);font-size:13px;line-height:1.6;color:var(--texto)}
+  .entrada-detalle.visible{display:block}
+  .detalle-fila{margin-bottom:6px}
+  .detalle-label{font-weight:600;color:var(--texto-suave);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
   .entrada-tipo-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
   .entrada-body{flex:1}
   .entrada-titulo{font-size:14px;font-weight:600;color:var(--texto);margin-bottom:4px}
@@ -302,20 +308,46 @@ async function apiSheets(path, method='GET', body=null){
   const opts = {method, headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}};
   if(body) opts.body = JSON.stringify(body);
   const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets'+path, opts);
-  if(!r.ok){const e=await r.text();throw new Error('Sheets API '+r.status+': '+e);}
+  if(!r.ok){
+    const e = await r.text();
+    let msg = 'Error '+r.status;
+    try { const j = JSON.parse(e); msg = j.error?.message || msg; } catch(x){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+async function apiDrive(path, method='GET', body=null){
+  const opts = {method, headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}};
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch('https://www.googleapis.com/drive/v3'+path, opts);
+  if(!r.ok){
+    const e = await r.text();
+    let msg = 'Drive error '+r.status;
+    try { const j = JSON.parse(e); msg = j.error?.message || msg; } catch(x){}
+    throw new Error(msg);
+  }
   return r.json();
 }
 
 async function buscarSheet(){
   const q = encodeURIComponent(`name='${SHEET_NAME}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`);
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`,{headers:{Authorization:'Bearer '+accessToken}});
-  const data = await r.json();
+  const data = await apiDrive(`/files?q=${q}&fields=files(id,name)`);
   return (data.files && data.files.length > 0) ? data.files[0].id : null;
 }
 
 async function crearSheet(){
-  const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({properties:{title:SHEET_NAME},sheets:[{properties:{title:'Datos'}}]})});
-  if(!r.ok) throw new Error('No se pudo crear la hoja');
+  const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets',{
+    method:'POST',
+    headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+    body:JSON.stringify({properties:{title:SHEET_NAME},sheets:[{properties:{title:'Datos'}}]})
+  });
+  if(!r.ok){
+    const e = await r.text();
+    let msg = 'No se pudo crear la hoja ('+r.status+')';
+    try { const j = JSON.parse(e); msg = j.error?.message || msg; } catch(x){}
+    throw new Error(msg);
+  }
   const data = await r.json();
   return data.spreadsheetId;
 }
@@ -369,7 +401,7 @@ async function guardarEntrada(){
     usuarioActual?usuarioActual.email:'',new Date().toISOString()
   ];
   try{
-    await apiSheets(`/${sheetId}/values/Datos!A1:O1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,'POST',{values:[fila]});
+    await apiSheets(`/${sheetId}/values/Datos!A:O:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,'POST',{values:[fila]});
     showToast('Guardado correctamente ✓','ok');
     limpiarFormulario();
     await cargarDatos();
@@ -451,7 +483,69 @@ function renderEntradas(){
   }
   let filtered=allEntradas.filter(e=>(!filtSec||e.seccion_memoria===filtSec)&&(!filtCentro||e.centro===filtCentro)&&(!filtTipo||e.tipo_contenido===filtTipo));
   if(!filtered.length){container.innerHTML='<div class="empty-state"><div class="icono">📭</div><p>No hay entradas para este filtro.</p></div>';return;}
-  container.innerHTML=filtered.map(e=>`<div class="entrada-card"><div class="entrada-tipo-dot" style="background:${TIPO_COLORES[e.tipo_contenido]||'#ccc'}"></div><div class="entrada-body"><div class="entrada-titulo">${e.titulo||'(sin título)'}</div><div class="entrada-meta"><span class="badge badge-${e.tipo_contenido}">${e.tipo_contenido||'—'}</span>${e.centro?`<span class="badge badge-gris">${e.centro}</span>`:''} ${e.servicio?`<span class="badge badge-gris">${e.servicio}</span>`:''}</div><div class="seccion-tag">${e.seccion_memoria||''}${e.subseccion?' › '+e.subseccion:''}</div></div><div class="entrada-fecha">${e.fecha||''}<br><span style="color:var(--texto-suave)">${e.autor?e.autor.split(' ')[0]:''}</span></div></div>`).join('');
+  container.innerHTML=filtered.map((e,i)=>{
+    const c = e.contenido || {};
+    let detalle = '';
+    const t = e.tipo_contenido;
+    if(t==='proyecto'){
+      detalle = `<div class="detalle-fila"><div class="detalle-label">Estado</div>${c.estado||'—'}</div>`;
+      if(c.descripcion) detalle += `<div class="detalle-fila"><div class="detalle-label">Descripción</div>${c.descripcion}</div>`;
+      if(c.responsable) detalle += `<div class="detalle-fila"><div class="detalle-label">Responsable</div>${c.responsable}</div>`;
+      if(c.resultados) detalle += `<div class="detalle-fila"><div class="detalle-label">Resultados / Próximos pasos</div>${c.resultados}</div>`;
+    } else if(t==='formacion'){
+      if(c.tipo_formacion) detalle += `<div class="detalle-fila"><div class="detalle-label">Tipo</div>${c.tipo_formacion}</div>`;
+      if(c.num_profesionales) detalle += `<div class="detalle-fila"><div class="detalle-label">Profesionales formados</div>${c.num_profesionales}</div>`;
+      if(c.entidad) detalle += `<div class="detalle-fila"><div class="detalle-label">Destinatarios</div>${c.entidad}</div>`;
+      if(c.descripcion) detalle += `<div class="detalle-fila"><div class="detalle-label">Descripción</div>${c.descripcion}</div>`;
+    } else if(t==='reconocimiento'){
+      if(c.tipo_rec) detalle += `<div class="detalle-fila"><div class="detalle-label">Tipo</div>${c.tipo_rec}</div>`;
+      if(c.organismo) detalle += `<div class="detalle-fila"><div class="detalle-label">Organismo</div>${c.organismo}</div>`;
+      if(c.descripcion) detalle += `<div class="detalle-fila"><div class="detalle-label">Descripción</div>${c.descripcion}</div>`;
+    } else if(t==='indicador_numerico'){
+      if(c.valor) detalle += `<div class="detalle-fila"><div class="detalle-label">Valor</div>${c.valor} ${c.unidad||''}</div>`;
+      if(c.definicion) detalle += `<div class="detalle-fila"><div class="detalle-label">Qué mide</div>${c.definicion}</div>`;
+      if(c.fuente) detalle += `<div class="detalle-fila"><div class="detalle-label">Fuente</div>${c.fuente}</div>`;
+    } else if(t==='texto_narrativo'){
+      if(c.contenido) detalle += `<div class="detalle-fila">${c.contenido}</div>`;
+    } else if(t==='publicacion'){
+      if(c.tipo_pub) detalle += `<div class="detalle-fila"><div class="detalle-label">Tipo</div>${c.tipo_pub}</div>`;
+      if(c.autores) detalle += `<div class="detalle-fila"><div class="detalle-label">Autores</div>${c.autores}</div>`;
+      if(c.revista) detalle += `<div class="detalle-fila"><div class="detalle-label">Revista / Congreso</div>${c.revista}</div>`;
+      if(c.doi) detalle += `<div class="detalle-fila"><div class="detalle-label">DOI</div>${c.doi}</div>`;
+    } else if(t==='lista'){
+      const items = c.items||[];
+      detalle += `<ul style="padding-left:16px;margin-top:4px">${items.map(it=>`<li style="margin-bottom:4px">${it}</li>`).join('')}</ul>`;
+    } else if(t==='tabla'){
+      if(c.descripcion) detalle += `<div class="detalle-fila" style="margin-bottom:8px">${c.descripcion}</div>`;
+      if(c.contenido){
+        const filas = c.contenido.split('\n').map(r=>r.split('\t'));
+        detalle += `<table style="border-collapse:collapse;width:100%;font-size:12px">`;
+        filas.forEach((f,fi)=>{
+          detalle += `<tr style="background:${fi===0?'var(--azul-fondo)':'var(--blanco)'}">`;
+          f.forEach(cell=>{ detalle += `<td style="border:1px solid var(--gris-borde);padding:5px 8px;${fi===0?'font-weight:600':''}">${cell}</td>`; });
+          detalle += `</tr>`;
+        });
+        detalle += `</table>`;
+      }
+    }
+    if(e.observaciones) detalle += `<div class="detalle-fila" style="margin-top:8px;font-style:italic;color:var(--texto-suave)">Nota: ${e.observaciones}</div>`;
+    return `<div class="entrada-card" onclick="toggleDetalle(${i})">
+      <div class="entrada-top">
+        <div class="entrada-tipo-dot" style="background:${TIPO_COLORES[e.tipo_contenido]||'#ccc'};margin-top:5px;flex-shrink:0"></div>
+        <div class="entrada-body" style="flex:1">
+          <div class="entrada-titulo">${e.titulo||'(sin título)'}</div>
+          <div class="entrada-meta">
+            <span class="badge badge-${e.tipo_contenido}">${e.tipo_contenido||'—'}</span>
+            ${e.centro?`<span class="badge badge-gris">${e.centro}</span>`:''}
+            ${e.servicio?`<span class="badge badge-gris">${e.servicio}</span>`:''}
+          </div>
+          <div class="seccion-tag">${e.seccion_memoria||''}${e.subseccion?' › '+e.subseccion:''}</div>
+        </div>
+        <div class="entrada-fecha">${e.fecha||''}<br><span style="color:var(--texto-suave)">${e.autor?e.autor.split(' ')[0]:''}</span><br><span style="color:var(--azul);font-size:10px">▼ ver</span></div>
+      </div>
+      <div class="entrada-detalle" id="detalle-${i}">${detalle}</div>
+    </div>`;
+  }).join('');
 }
 
 async function generarMemoria(){
@@ -469,6 +563,12 @@ async function generarMemoria(){
 function descargarMemoria(){
   const blob=new Blob([memoriaGenerada],{type:'text/plain;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Memoria_Enfermeria_HUVN_2025.txt';a.click();
+}
+
+
+function toggleDetalle(i){
+  const d = document.getElementById('detalle-'+i);
+  if(d) d.classList.toggle('visible');
 }
 
 function showToast(msg,tipo){
