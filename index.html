@@ -185,7 +185,6 @@
         <div class="btn-row">
           <button class="btn-primary" onclick="guardarEntrada()" id="btn-guardar">💾 Guardar en Drive</button>
           <button class="btn-secondary" onclick="limpiarFormulario()">Limpiar</button>
-          <span id="save-msg" style="font-size:13px;color:var(--texto-suave)"></span>
         </div>
       </div>
 
@@ -230,13 +229,17 @@
 
 <script>
 const CLIENT_ID = '669232783014-5dc86g3p2djj0l39if0440vg5mc5g8cu.apps.googleusercontent.com';
-const FILE_ID = '13nyYan8MyOPdDKmMpGUwHYSINmQpGF7u';
+const FOLDER_NAME = 'memoria enfermeria HUVN';
+const FILE_NAME = 'memoria_enfermeria_huvn_datos.json';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
 
 let accessToken = null;
 let usuarioActual = null;
 let allEntradas = [];
+let fileId = null;
 let memoriaGenerada = '';
+
+const DATOS_INICIALES = {"version":"1.0","hospital":"HUVN","ultima_actualizacion":"2025-12-31T00:00:00","entradas":[{"id":"id-001","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"2. Organización y Profesionales","subseccion":"2.4 Unidades y dispositivos","tipo_contenido":"lista","titulo":"Unidades y dispositivos — Área Médica","contenido":{"items":["HEMATOLOGÍA: Sala de hospitalización, Sala de trasplante, Hospital de día, Consultas Externas, Unidad de Accesos Vasculares y Terapias Intravenosas","MEDICINA INTERNA: Sala de hospitalización, Sala hospitalización Pacientes Crónicos Complejos, Sala hospitalización Desintoxicación Hospitalaria (UDH), Hospitalización Domiciliaria, Consultas Externas, Cuidados Paliativos, UCA y CCP","ENFERMEDADES INFECCIOSAS: Sala de hospitalización, Hospital de día, Consultas Externas","DIGESTIVO: Sala de hospitalización, Sala de Endoscopias, Consultas Externas, Pruebas Funcionales","CARDIOLOGÍA: Sala de hospitalización, Hospital de día, Consultas externas, Unidad de Rehabilitación Cardiaca, Unidad de Insuficiencia Cardiaca, Unidad de Imagen (Ecocardiografía), Unidad de Ergometría y Holter, Unidad de Arritmias, Unidad de Hemodinámica","ONCOLOGÍA: Sala de hospitalización, Hospital de día, Consultas externas","NEFROLOGÍA: Sala de hospitalización, Sala de trasplante, Sala de Hemodiálisis, Consultas Externas, Unidad de técnicas domiciliarias","REUMATOLOGÍA: Consultas Externas","NEUMOLOGÍA: Sala de hospitalización, UCRI, Hospitalización Domiciliaria, Consultas externas, Pruebas Funcionales, Unidad del Sueño y Ventilación Mecánica No Invasiva, Unidad de Broncoscopias y Neumología Intervencionista","HOSPITAL DE DÍA POLIVALENTE","MÓDULO PENITENCIARIO"]},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-002","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área de Críticos","servicio":"Global Área Críticos","seccion_memoria":"2. Organización y Profesionales","subseccion":"2.4 Unidades y dispositivos","tipo_contenido":"lista","titulo":"Unidades y dispositivos — Área de Críticos","contenido":{"items":["Servicio de Urgencias","Servicio de Medicina Intensiva"]},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-003","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área de Salud Mental","servicio":"Global Área Salud Mental","seccion_memoria":"2. Organización y Profesionales","subseccion":"2.4 Unidades y dispositivos","tipo_contenido":"lista","titulo":"Unidades y dispositivos — Área de Salud Mental","contenido":{"items":["Unidad de Agudos","UNIDAD TCA: Unidad de hospitalización, Hospital de Día, Consultas Externas","UNIDAD INFANTO-JUVENIL: Unidad de hospitalización, Hospital de Día, Consultas Externas","COMUNIDAD TERAPÉUTICA: Hospital de día, Piso de entrenamiento, Salas de régimen interno","EQUIPOS DE SALUD MENTAL COMUNITARIA: Cartuja, Atarfe, Santa Fe","Hospital de Día Adultos","Programa ETIC"]},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-004","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"3. Actividad y Cuidados","subseccion":"3.3 Cartera de servicios","tipo_contenido":"lista","titulo":"Cartera de servicios de enfermería — Área Médica y Salud Mental","contenido":{"items":["ANGIOLOGÍA Y CIRUGÍA VASCULAR: Consulta de Índice Tobillo-brazo, Consulta de curas","DIGESTIVO: Consultas Externas, Consulta de Enfermedad Inflamatoria Intestinal","CARDIOLOGÍA: Consultas Externas y Pruebas Funcionales, Consulta de Insuficiencia Cardiaca, Holter, Consulta Telemática, Consulta ECG, Sala de Rehabilitación Cardiaca, Consulta de Ecocardiografía, Hospital de Día","HEMATOLOGÍA: Hospital de Día H. General, Hospital de Día H. Dr Oloriz, Flebotomías, Aféresis terapéutica, Unidad de Accesos Vasculares, Sala de Extracciones, Consultas Externas, Consulta control Sintrom, Coagulación especial","HOSPITAL DE DÍA POLIVALENTE: Digestivo, Reumatología, Dermatología, Endocrino","INFECCIOSOS: Hospital de Día","MEDICINA INTERNA: UCA y CCP, Hospital de Día","NEFROLOGÍA: Diálisis Peritoneal, Hemodiálisis, Hospital de Día, Consultas Externas, Consulta ERCA","NEUMOLOGÍA: Hospital de Día, Pruebas Funcionales, Consultas Externas, Asma Grave","ONCOLOGÍA: Hospital de Día, Consultas Externas, Consulta de Consejo Genético","REUMATOLOGÍA: Consultas Externas","SALUD MENTAL: Consultas Externas, Visita domiciliaria, Grupo de relajación, Consultas de seguimiento, Primeras consultas de enfermeras especialistas"]},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-005","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"4. Calidad y Seguridad","subseccion":"4.2 Auditorías","tipo_contenido":"lista","titulo":"Auditorías realizadas en 2025","contenido":{"items":["Identificación correcta de pacientes","Protocolo preparación y administración de medicación","Flebitis Zero"]},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-006","fecha":"2025-11-01","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"4. Calidad y Seguridad","subseccion":"4.4.3 Voluntariado","tipo_contenido":"proyecto","titulo":"Programa de Voluntariado — Sociedad de San Vicente de Paúl (SSVP)","contenido":{"estado":"En marcha","descripcion":"Programa estructurado de voluntariado de acompañamiento a pacientes hospitalizados, en colaboración con la SSVP. 5 voluntarios/as activos, presencia lunes tarde y martes y jueves mañana y tarde.","responsable":"Dirección de Enfermería","resultados":"83 pacientes atendidos en noviembre-diciembre 2025 (50 ingresados, 33 hemodiálisis). Para 2026: 8 voluntarios/as y nueva línea de orientación desde el hall de entrada."},"observaciones":"Inicio: noviembre 2025","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-007","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"4. Calidad y Seguridad","subseccion":"4.4.3 Voluntariado","tipo_contenido":"tabla","titulo":"Pacientes atendidos por voluntariado SSVP — noviembre-diciembre 2025","contenido":{"descripcion":"Distribución por área asistencial","contenido":"Área asistencial\tPacientes atendidos\nPlanta 9 – Medicina Interna\t30\nHemodiálisis Planta 1\t29\nDigestivo Planta 5\t16\nHemodiálisis Planta 2\t4\nNefrología\t2\nVascular\t2\nTOTAL\t83"},"observaciones":"50 ingresados + 33 hemodiálisis","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-008","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"5. Innovación y Transformación","subseccion":"5.4 Proyectos estratégicos","tipo_contenido":"proyecto","titulo":"Dashboard de análisis de datos para gestión de camas","contenido":{"estado":"En marcha","descripcion":"Dashboard interactivo que integra y visualiza datos diarios de altas hospitalarias de Diraya. Procesa Listado de Altas por Profesional e Ingresos y Altas por Horas. Sistema automático de detección y procesado. 5 áreas de análisis: Resumen, Demoras, Ingresos/Altas, Facultativos y Detalle. Clasificación semafórica: verde (<3h), amarillo (3-5h), rojo (>5h).","responsable":"Javier Rodríguez – Subdirector Enfermería Área Médica","resultados":"Más de 30.000 registros desde enero 2024. Desarrollado con recursos propios, sin coste para el hospital."},"observaciones":"Sin coste para el hospital.","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-009","fecha":"2025-03-11","periodo_etiqueta":"1T2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"6. Docencia y Formación","subseccion":"6.2 Posgrado","tipo_contenido":"formacion","titulo":"Curso Power BI — Equipo Directivo","contenido":{"tipo_formacion":"Posgrado","num_profesionales":"","entidad":"Equipo Directivo de Enfermería","descripcion":"Curso de formación en análisis de datos con Power BI, 10 y 11 de marzo de 2025."},"observaciones":"10-11 marzo 2025","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-010","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"6. Docencia y Formación","subseccion":"6.4 Formación continuada","tipo_contenido":"formacion","titulo":"Formación externa UAV — profesionales de otros hospitales","contenido":{"tipo_formacion":"Formación externa","num_profesionales":15,"entidad":"Hospitales de Ceuta, Huelva, Córdoba, Málaga, Universidad de Granada y Hospital de Melilla","descripcion":"Formación a 15 enfermeras de hospitales externos y desplazamiento al Hospital de Melilla para formación in situ."},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-011","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"6. Docencia y Formación","subseccion":"6.4 Formación continuada","tipo_contenido":"formacion","titulo":"Sesiones clínicas internas — cuidados y mantenimiento de accesos venosos","contenido":{"tipo_formacion":"Formación continuada","num_profesionales":241,"entidad":"Distintas unidades del Hospital General HUVN","descripcion":"Sesiones clínicas sobre cuidados y mantenimiento de accesos venosos."},"observaciones":"241 profesionales formados","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-012","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área de Críticos","servicio":"Urgencias","seccion_memoria":"6. Docencia y Formación","subseccion":"6.4 Formación continuada","tipo_contenido":"formacion","titulo":"Formación en punción ecoguiada — Unidad de Urgencias","contenido":{"tipo_formacion":"Formación continuada","num_profesionales":10,"entidad":"Unidad de Urgencias — Hospital General HUVN","descripcion":"Formación en técnicas de punción ecoguiada."},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-013","fecha":"2025-11-07","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"6. Docencia y Formación","subseccion":"6.4 Formación continuada","tipo_contenido":"formacion","titulo":"Jornadas Insulares de Acceso Vascular — Las Palmas","contenido":{"tipo_formacion":"Congreso / Jornada","num_profesionales":"","entidad":"Las Palmas de Gran Canaria","descripcion":"Participación en Jornadas Insulares de Acceso Vascular, 7 noviembre 2025."},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-014","fecha":"2025-10-30","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"6. Docencia y Formación","subseccion":"6.4 Formación continuada","tipo_contenido":"formacion","titulo":"Vyvadays de Acceso Vascular — Valencia","contenido":{"tipo_formacion":"Congreso / Jornada","num_profesionales":"","entidad":"Valencia","descripcion":"Participación en Vyvadays de Acceso Vascular, 30-31 octubre 2025."},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-015","fecha":"2025-06-11","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"6. Docencia y Formación","subseccion":"6.4 Formación continuada","tipo_contenido":"formacion","titulo":"MACOVA 2025 — Ámsterdam","contenido":{"tipo_formacion":"Congreso / Jornada","num_profesionales":"","entidad":"Ámsterdam","descripcion":"Participación en MACOVA 2025, 11-13 junio 2025."},"observaciones":"","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-016","fecha":"2025-11-19","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"6. Docencia y Formación","subseccion":"6.4 Formación continuada","tipo_contenido":"formacion","titulo":"Congreso Nacional SEINAV — Pamplona","contenido":{"tipo_formacion":"Congreso / Jornada","num_profesionales":"","entidad":"SEINAV — Pamplona","descripcion":"Participación en Congreso Nacional SEINAV, 19-21 noviembre 2025. El HUVN fue designado sede del Congreso SEINAV 2027."},"observaciones":"HUVN sede SEINAV 2027","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-017","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"7. Investigación","subseccion":"7.4 Colaboraciones y alianzas","tipo_contenido":"proyecto","titulo":"Estudio multicéntrico nacional retrospectivo sobre PICC-port implantados","contenido":{"estado":"En marcha","descripcion":"Petición al CEI para estudio multicéntrico nacional sobre PICC-port en pacientes adultos. Análisis de tasa de complicaciones, duración, características demográficas y coste-eficacia. 9 centros participantes.","responsable":"Equipo UAV y Terapia IV — HUVN","resultados":"Petición al CEI presentada en 2025. Centros: H.U. Doctor Negrín, Parc Taulí, H.U. Torrecárdenas, HUVN, H.U. Rey Juan Carlos, H.U. Marqués de Valdecilla, H.U. Sant Joan, H. Arnau de Vilanova, H. Virgen de los Lirios."},"observaciones":"9 centros. Estudio retrospectivo anonimizado.","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-018","fecha":"2025-04-15","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"8. Reconocimientos y Premios","subseccion":"8.3 Certificaciones","tipo_contenido":"reconocimiento","titulo":"Acreditación SEINAV — Certificado de Conformidad EIAV v3-2023","contenido":{"tipo_rec":"Certificación","organismo":"SEINAV / DNV Business Assurance Spain","descripcion":"Certificado de Conformidad EIAV v3-2023, código EIAV-Hospital_005/2025, válido hasta 15 abril 2028. Primera unidad de Andalucía con esta acreditación. Unidad compuesta por 4 enfermeras y 2 TCAE, creada en 2020."},"observaciones":"Primera unidad de Andalucía. Válido hasta 15 abril 2028.","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-019","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"9. Proyectos Relevantes","subseccion":"9. Proyectos relevantes del año","tipo_contenido":"proyecto","titulo":"Plan de Emergencias Externas (PEEX)","contenido":{"estado":"Planificado","descripcion":"Plan de respuesta ante catástrofes externas con llegada masiva de víctimas. Tres niveles de activación. Triaje JumpSTART. Coordinación con 112, Protección Civil y EPES-061. Programa de formación y simulacros.","responsable":"Dirección de Enfermería — Hospital General HUVN","resultados":"Plan elaborado en 2025. Implementación en 2026."},"observaciones":"Implementación 2026.","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-020","fecha":"2025-01-30","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"9. Proyectos Relevantes","subseccion":"9. Proyectos relevantes del año","tipo_contenido":"proyecto","titulo":"Implementación de Sistema de Seguridad FARMIS/ONCOFARM en Hospitales de Día","contenido":{"estado":"Planificado","descripcion":"Valoración de Braum e ICU Medical para FARMIS/ONCOFARM en Hospitales de Día médicos. Visita al Hospital de Sagunto el 30 enero. Reuniones con Oncología, Hematología, Farmacia, Medicina Interna, Digestivo, Endocrino, Reumatología, Dermatología, Nefrología, Salud Mental, Inmunología y Urología.","responsable":"Subdirección de Enfermería Área Médica — Subdirección Médica","resultados":"Evaluación completada en 2025. Implantación en 2026."},"observaciones":"Implantación en 2026.","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-021","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"9. Proyectos Relevantes","subseccion":"9. Proyectos relevantes del año","tipo_contenido":"proyecto","titulo":"Manual de Competencias Enfermeras de Acceso Vascular — Consejo General de Enfermería","contenido":{"estado":"Completado","descripcion":"Coordinación del grupo de trabajo nacional de expertos en acceso vascular para elaborar el Manual de Competencias Enfermeras de Acceso Vascular y Terapia Intravenosa.","responsable":"Equipo UAV y Terapia IV — HUVN / Consejo General de Enfermería","resultados":"Manual aprobado en diciembre 2025 en reunión de Presidentes de Colegios de Enfermería de todas las provincias y CCAA."},"observaciones":"Aprobado diciembre 2025. Ámbito nacional.","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-022","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"Global Área Médica","seccion_memoria":"10. Retos y Líneas de Acción","subseccion":"10.1 Retos estratégicos","tipo_contenido":"proyecto","titulo":"Proyecto 2026: Enfermera Responsable de Gestión de Camas (ERGC) y Sala NEXO","contenido":{"estado":"Planificado","descripcion":"Sala NEXO (Centro de Mando Asistencial) operada por la ERGC para gestionar el flujo de camas en el Hospital General. Horario L-V, turnos mañana y tarde, dos enfermeras por turno. Regla Cama Preparada, objetivo <2h desde alta hasta cama lista, compactación de pacientes, libro de decisiones digital.","responsable":"Subdirección de Enfermería Área Médica","resultados":"Planificado para 2026. Indicadores: reducción tiempo ingreso desde Urgencias, reducción cancelaciones quirúrgicas, control camas bloqueadas."},"observaciones":"Implementación 2026.","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"},{"id":"id-023","fecha":"2025-12-31","periodo_etiqueta":"2025","centro":"Hospital General","area":"Área Médica","servicio":"UAV y Terapia IV","seccion_memoria":"10. Retos y Líneas de Acción","subseccion":"10.1 Retos estratégicos","tipo_contenido":"proyecto","titulo":"Creación del Grupo Andaluz de Accesos Vasculares y Terapia IV","contenido":{"estado":"En marcha","descripcion":"Proyecto de unificación de protocolos entre todas las unidades de acceso vascular de Andalucía. Contacto con todas las provincias. Apoyo de la Coordinación de Cuidados de la Consejería. Canal de comunicación online creado.","responsable":"Equipo UAV y Terapia IV — HUVN / Coordinación de Cuidados Consejería","resultados":"Canal creado. Reunión presencial programada marzo 2026 en Ronda."},"observaciones":"Reunión presencial: marzo 2026, Ronda.","autor":"Javier Rodríguez – Subdirector Enfermería Área Médica","fecha_registro":"2026-05-31T19:37:00"}]};
 
 const SECCIONES = {
   '1. Presentación':['1. Presentación'],
@@ -250,45 +253,16 @@ const SECCIONES = {
   '9. Proyectos Relevantes':['9. Proyectos relevantes del año'],
   '10. Retos y Líneas de Acción':['10.1 Retos estratégicos','10.2 Objetivos operativos','10.3 Programas prioritarios','10.4 Conclusiones finales']
 };
-const TIPO_HINTS = {
-  texto_narrativo:'Para párrafos descriptivos o texto libre.',
-  indicador_numerico:'Para cifras: tasas, tiempos, porcentajes.',
-  proyecto:'Para describir un proyecto con estado y resultados.',
-  formacion:'Para cursos, sesiones o congresos.',
-  reconocimiento:'Para premios o certificaciones.',
-  publicacion:'Para artículos o comunicaciones científicas.',
-  tabla:'Para datos en tabla.',lista:'Para listados de items.'
-};
-const AREAS = {
-  'Hospital General':['Área Médica','Área de Críticos','Área de Salud Mental','Dirección de Enfermería'],
-  'Hospital Materno-Infantil':['Área Materno-Infantil','Dirección de Enfermería'],
-  'Hospital Neurotraumatológico':['Área Neurotraumatológica','Dirección de Enfermería'],
-  'Dirección de Enfermería':['Dirección de Enfermería']
-};
-const SERVICIOS = {
-  'Área Médica':['Hematología','Medicina Interna','Enfermedades Infecciosas','Digestivo','Cardiología','Oncología','Nefrología','Reumatología','Neumología','Hospital de Día Polivalente','Módulo Penitenciario','UAV y Terapia IV','Global Área Médica'],
-  'Área de Críticos':['Urgencias','Medicina Intensiva','Global Área Críticos'],
-  'Área de Salud Mental':['Unidad de Agudos','Unidad TCA','Unidad Infanto-Juvenil','Comunidad Terapéutica','Equipos Salud Mental Comunitaria','Hospital de Día Adultos','Programa ETIC','Global Área Salud Mental'],
-  'Área Materno-Infantil':['Global Área Materno-Infantil'],
-  'Área Neurotraumatológica':['Global Área Neurotraumatológica'],
-  'Dirección de Enfermería':['Global Hospital / Dirección']
-};
-const CAMPOS_EXTRA = {
-  indicador_numerico:`<div class="form-grid"><div class="form-group"><label>Valor</label><input type="text" id="f-valor" placeholder="Ej: 3.2"></div><div class="form-group"><label>Unidad</label><input type="text" id="f-unidad" placeholder="Ej: horas, %"></div><div class="form-group span2"><label>Qué mide</label><textarea id="f-definicion" style="min-height:60px" placeholder="Descripción..."></textarea></div><div class="form-group span2"><label>Fuente</label><input type="text" id="f-fuente" placeholder="Ej: Dashboard, Diraya..."></div></div>`,
-  proyecto:`<div class="form-grid"><div class="form-group"><label>Estado</label><select id="f-estado"><option>En marcha</option><option>Completado</option><option>Planificado</option></select></div><div class="form-group"><label>Responsable</label><input type="text" id="f-responsable" placeholder="Nombre y cargo"></div><div class="form-group span2"><label>Descripción</label><textarea id="f-descripcion" placeholder="Qué es, objetivo..."></textarea></div><div class="form-group span2"><label>Resultados o próximos pasos</label><textarea id="f-resultados" style="min-height:60px" placeholder="Logros o pasos previstos..."></textarea></div></div>`,
-  formacion:`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="f-tipo-form"><option>Formación continuada</option><option>Pregrado</option><option>Posgrado</option><option>EIR</option><option>Formación externa</option><option>Congreso / Jornada</option></select></div><div class="form-group"><label>Nº de profesionales</label><input type="number" id="f-num-prof" placeholder="0"></div><div class="form-group span2"><label>Destinatarios</label><input type="text" id="f-entidad" placeholder="Ej: Unidades del HUVN..."></div><div class="form-group span2"><label>Descripción</label><textarea id="f-descripcion" style="min-height:60px" placeholder="En qué consistió..."></textarea></div></div>`,
-  reconocimiento:`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="f-tipo-rec"><option>Certificación</option><option>Premio profesional</option><option>Reconocimiento institucional</option></select></div><div class="form-group"><label>Organismo</label><input type="text" id="f-organismo" placeholder="Ej: SEINAV..."></div><div class="form-group span2"><label>Descripción</label><textarea id="f-descripcion" placeholder="En qué consiste..."></textarea></div></div>`,
-  publicacion:`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="f-tipo-pub"><option>Artículo</option><option>Comunicación oral</option><option>Póster</option><option>Capítulo de libro</option></select></div><div class="form-group"><label>Autores</label><input type="text" id="f-autores" placeholder="Apellido A, et al."></div><div class="form-group"><label>Revista o congreso</label><input type="text" id="f-revista" placeholder="Nombre..."></div><div class="form-group"><label>DOI</label><input type="text" id="f-doi" placeholder="doi:10.xxxx/..."></div></div>`,
-  texto_narrativo:`<div class="form-group"><label>Contenido</label><textarea id="f-contenido" style="min-height:120px" placeholder="Escribe el texto..."></textarea></div>`,
-  tabla:`<div class="form-grid"><div class="form-group span2"><label>Descripción</label><input type="text" id="f-descripcion" placeholder="Qué muestra..."></div><div class="form-group span2"><label>Datos (columnas separadas por tabulador)</label><textarea id="f-contenido" style="min-height:100px" placeholder="Col1&#9;Col2&#10;Dato1&#9;Dato2"></textarea></div></div>`,
-  lista:`<div class="form-group"><label>Items (uno por línea)</label><textarea id="f-contenido" style="min-height:100px" placeholder="Item 1&#10;Item 2..."></textarea></div>`
-};
+const TIPO_HINTS = {texto_narrativo:'Para párrafos descriptivos o texto libre.',indicador_numerico:'Para cifras: tasas, tiempos, porcentajes.',proyecto:'Para describir un proyecto con estado y resultados.',formacion:'Para cursos, sesiones o congresos.',reconocimiento:'Para premios o certificaciones.',publicacion:'Para artículos o comunicaciones científicas.',tabla:'Para datos en tabla.',lista:'Para listados de items.'};
+const AREAS = {'Hospital General':['Área Médica','Área de Críticos','Área de Salud Mental','Dirección de Enfermería'],'Hospital Materno-Infantil':['Área Materno-Infantil','Dirección de Enfermería'],'Hospital Neurotraumatológico':['Área Neurotraumatológica','Dirección de Enfermería'],'Dirección de Enfermería':['Dirección de Enfermería']};
+const SERVICIOS = {'Área Médica':['Hematología','Medicina Interna','Enfermedades Infecciosas','Digestivo','Cardiología','Oncología','Nefrología','Reumatología','Neumología','Hospital de Día Polivalente','Módulo Penitenciario','UAV y Terapia IV','Global Área Médica'],'Área de Críticos':['Urgencias','Medicina Intensiva','Global Área Críticos'],'Área de Salud Mental':['Unidad de Agudos','Unidad TCA','Unidad Infanto-Juvenil','Comunidad Terapéutica','Equipos Salud Mental Comunitaria','Hospital de Día Adultos','Programa ETIC','Global Área Salud Mental'],'Área Materno-Infantil':['Global Área Materno-Infantil'],'Área Neurotraumatológica':['Global Área Neurotraumatológica'],'Dirección de Enfermería':['Global Hospital / Dirección']};
+const CAMPOS_EXTRA = {indicador_numerico:`<div class="form-grid"><div class="form-group"><label>Valor</label><input type="text" id="f-valor" placeholder="Ej: 3.2"></div><div class="form-group"><label>Unidad</label><input type="text" id="f-unidad" placeholder="Ej: horas, %"></div><div class="form-group span2"><label>Qué mide</label><textarea id="f-definicion" style="min-height:60px" placeholder="Descripción..."></textarea></div><div class="form-group span2"><label>Fuente</label><input type="text" id="f-fuente" placeholder="Ej: Dashboard, Diraya..."></div></div>`,proyecto:`<div class="form-grid"><div class="form-group"><label>Estado</label><select id="f-estado"><option>En marcha</option><option>Completado</option><option>Planificado</option></select></div><div class="form-group"><label>Responsable</label><input type="text" id="f-responsable" placeholder="Nombre y cargo"></div><div class="form-group span2"><label>Descripción</label><textarea id="f-descripcion" placeholder="Qué es, objetivo..."></textarea></div><div class="form-group span2"><label>Resultados o próximos pasos</label><textarea id="f-resultados" style="min-height:60px" placeholder="Logros o pasos previstos..."></textarea></div></div>`,formacion:`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="f-tipo-form"><option>Formación continuada</option><option>Pregrado</option><option>Posgrado</option><option>EIR</option><option>Formación externa</option><option>Congreso / Jornada</option></select></div><div class="form-group"><label>Nº de profesionales</label><input type="number" id="f-num-prof" placeholder="0"></div><div class="form-group span2"><label>Destinatarios</label><input type="text" id="f-entidad" placeholder="Ej: Unidades del HUVN..."></div><div class="form-group span2"><label>Descripción</label><textarea id="f-descripcion" style="min-height:60px" placeholder="En qué consistió..."></textarea></div></div>`,reconocimiento:`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="f-tipo-rec"><option>Certificación</option><option>Premio profesional</option><option>Reconocimiento institucional</option></select></div><div class="form-group"><label>Organismo</label><input type="text" id="f-organismo" placeholder="Ej: SEINAV..."></div><div class="form-group span2"><label>Descripción</label><textarea id="f-descripcion" placeholder="En qué consiste..."></textarea></div></div>`,publicacion:`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="f-tipo-pub"><option>Artículo</option><option>Comunicación oral</option><option>Póster</option><option>Capítulo de libro</option></select></div><div class="form-group"><label>Autores</label><input type="text" id="f-autores" placeholder="Apellido A, et al."></div><div class="form-group"><label>Revista o congreso</label><input type="text" id="f-revista" placeholder="Nombre..."></div><div class="form-group"><label>DOI</label><input type="text" id="f-doi" placeholder="doi:10.xxxx/..."></div></div>`,texto_narrativo:`<div class="form-group"><label>Contenido</label><textarea id="f-contenido" style="min-height:120px" placeholder="Escribe el texto..."></textarea></div>`,tabla:`<div class="form-grid"><div class="form-group span2"><label>Descripción</label><input type="text" id="f-descripcion" placeholder="Qué muestra..."></div><div class="form-group span2"><label>Datos</label><textarea id="f-contenido" style="min-height:100px" placeholder="Col1&#9;Col2&#10;Dato1&#9;Dato2"></textarea></div></div>`,lista:`<div class="form-group"><label>Items (uno por línea)</label><textarea id="f-contenido" style="min-height:100px" placeholder="Item 1&#10;Item 2..."></textarea></div>`};
 const TIPO_COLORES = {proyecto:'#2d7ab5',formacion:'#1d9e75',reconocimiento:'#ef9f27',indicador_numerico:'#639922',texto_narrativo:'#888780',publicacion:'#d4537e',tabla:'#7f77dd',lista:'#d85a30'};
 
-function iniciarSesion() {
+async function iniciarSesion() {
   const client = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
-    scope: SCOPES,
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
     callback: async (resp) => {
       if(resp.error){ showToast('Error al iniciar sesión','error'); return; }
       accessToken = resp.access_token;
@@ -302,16 +276,83 @@ function iniciarSesion() {
         document.getElementById('pantalla-login').style.display = 'none';
         document.getElementById('pantalla-app').style.display = 'block';
         showToast('Bienvenido/a, '+info.name.split(' ')[0]+' ✓','ok');
-        await cargarDatos();
-      } catch(e){ showToast('Error al obtener datos de usuario','error'); }
+        await inicializarArchivo();
+      } catch(e){ showToast('Error: '+e.message,'error'); }
     }
   });
   client.requestAccessToken({prompt:'consent'});
 }
 
+async function buscarOCrearCarpeta() {
+  // Buscar carpeta existente
+  const q = encodeURIComponent(`name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`,{headers:{Authorization:'Bearer '+accessToken}});
+  const data = await r.json();
+  if(data.files && data.files.length > 0) return data.files[0].id;
+  // Crear carpeta nueva
+  const rc = await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({name:FOLDER_NAME,mimeType:'application/vnd.google-apps.folder'})});
+  const carpeta = await rc.json();
+  return carpeta.id;
+}
+
+async function buscarArchivo(carpetaId) {
+  const q = encodeURIComponent(`name='${FILE_NAME}' and '${carpetaId}' in parents and trashed=false`);
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`,{headers:{Authorization:'Bearer '+accessToken}});
+  const data = await r.json();
+  if(data.files && data.files.length > 0) return data.files[0].id;
+  return null;
+}
+
+async function crearArchivo(carpetaId) {
+  // Crear con metadata
+  const meta = {name:FILE_NAME, parents:[carpetaId], mimeType:'application/json'};
+  const rm = await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(meta)});
+  const archivo = await rm.json();
+  // Subir contenido inicial con los 23 datos
+  await fetch(`https://www.googleapis.com/upload/drive/v3/files/${archivo.id}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(DATOS_INICIALES)});
+  return archivo.id;
+}
+
+async function inicializarArchivo() {
+  showToast('Conectando con Drive...');
+  try {
+    const carpetaId = await buscarOCrearCarpeta();
+    let fid = await buscarArchivo(carpetaId);
+    if(!fid) {
+      showToast('Creando archivo de datos...');
+      fid = await crearArchivo(carpetaId);
+      showToast('Archivo creado con datos iniciales ✓','ok');
+    }
+    fileId = fid;
+    await cargarDatos();
+  } catch(e) {
+    showToast('Error al inicializar: '+e.message,'error');
+  }
+}
+
+async function leerDrive(){
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
+  if(!r.ok) throw new Error('Error leyendo Drive: '+r.status);
+  return await r.json();
+}
+
+async function escribirDrive(datos){
+  const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(datos)});
+  if(!r.ok) throw new Error('Error escribiendo Drive: '+r.status);
+}
+
+async function cargarDatos(){
+  try{
+    const json = await leerDrive();
+    allEntradas = json.entradas||[];
+    renderResumen(json);
+    renderEntradas();
+  }catch(e){ showToast('Error al cargar: '+e.message,'error'); }
+}
+
 function cerrarSesion(){
   if(accessToken) google.accounts.oauth2.revoke(accessToken);
-  accessToken=null; usuarioActual=null;
+  accessToken=null; usuarioActual=null; fileId=null;
   document.getElementById('pantalla-login').style.display='flex';
   document.getElementById('pantalla-app').style.display='none';
 }
@@ -356,54 +397,26 @@ function limpiarFormulario(){
   document.getElementById('f-subseccion').innerHTML='<option value="">Primero elige sección</option>';
 }
 
-async function leerDrive(){
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
-  if(!r.ok) throw new Error('Error leyendo Drive: '+r.status);
-  return await r.json();
-}
-
-async function escribirDrive(datos){
-  const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${FILE_ID}?uploadType=media`,{
-    method:'PATCH',
-    headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-    body:JSON.stringify(datos)
-  });
-  if(!r.ok) throw new Error('Error escribiendo Drive: '+r.status);
-}
-
-async function cargarDatos(){
-  try{
-    const json = await leerDrive();
-    allEntradas = json.entradas||[];
-    renderResumen(json);
-    renderEntradas();
-  }catch(e){
-    showToast('Error al cargar datos: '+e.message,'error');
-  }
-}
-
 async function guardarEntrada(){
   const titulo=getVal('f-titulo').trim();
   const tipo=getVal('f-tipo');
   const seccion=getVal('f-seccion');
   if(!titulo||!tipo||!seccion){showToast('Rellena título, tipo y sección','error');return;}
   const btn=document.getElementById('btn-guardar');
-  btn.innerHTML='<span class="spinner"></span> Guardando...';
-  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span> Guardando...';btn.disabled=true;
   const entrada={id:uuid(),fecha:getVal('f-fecha'),periodo_etiqueta:'2025',centro:getVal('f-centro'),area:getVal('f-area'),servicio:getVal('f-servicio'),seccion_memoria:seccion,subseccion:getVal('f-subseccion'),tipo_contenido:tipo,titulo,contenido:recogerContenido(tipo),observaciones:getVal('f-observaciones'),autor:getVal('f-autor'),email_autor:usuarioActual?usuarioActual.email:'',fecha_registro:new Date().toISOString()};
   try{
     const json = await leerDrive();
-    json.entradas = json.entradas||[];
+    json.entradas=json.entradas||[];
     json.entradas.push(entrada);
-    json.ultima_actualizacion = new Date().toISOString();
+    json.ultima_actualizacion=new Date().toISOString();
     await escribirDrive(json);
-    allEntradas = json.entradas;
-    document.getElementById('s-total').textContent = allEntradas.length;
+    allEntradas=json.entradas;
+    document.getElementById('s-total').textContent=allEntradas.length;
     showToast('Guardado correctamente ✓','ok');
     limpiarFormulario();
   }catch(e){showToast('Error al guardar: '+e.message,'error');}
-  btn.innerHTML='💾 Guardar en Drive';
-  btn.disabled=false;
+  btn.innerHTML='💾 Guardar en Drive';btn.disabled=false;
 }
 
 function renderResumen(json){
@@ -420,7 +433,7 @@ function renderResumen(json){
 
 function renderEntradas(){
   const container=document.getElementById('entradas-container');
-  if(!container) return;
+  if(!container)return;
   const filtSec=document.getElementById('filter-seccion')?document.getElementById('filter-seccion').value:'';
   const filtCentro=document.getElementById('filter-centro')?document.getElementById('filter-centro').value:'';
   const filtTipo=document.getElementById('filter-tipo')?document.getElementById('filter-tipo').value:'';
@@ -432,8 +445,7 @@ function renderEntradas(){
 }
 
 async function generarMemoria(){
-  const btn=event.target;
-  btn.textContent='Generando...';btn.disabled=true;
+  const btn=event.target;btn.textContent='Generando...';btn.disabled=true;
   showToast('Generando memoria, puede tardar unos segundos...');
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:8000,system:'Eres experto en documentación institucional sanitaria. Genera la Memoria Anual de Actividad de Enfermería del HUVN 2025 en formato institucional, con prosa cohesiva y profesional. Organiza por secciones. Para secciones sin datos indica "Sin actividad registrada para este período".',messages:[{role:'user',content:'Genera la memoria con estos datos: '+JSON.stringify(allEntradas)}]})});
