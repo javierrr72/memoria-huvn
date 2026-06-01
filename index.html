@@ -92,6 +92,9 @@
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .empty-state{text-align:center;padding:48px 20px;color:var(--texto-suave)}
+  .btn-filtro{background:var(--gris);border:1.5px solid var(--gris-borde);color:var(--texto-suave);padding:7px 14px;border-radius:7px;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s}
+  .btn-filtro:hover{background:var(--azul-fondo);color:var(--azul);border-color:var(--azul-claro)}
+  .btn-filtro.activo{background:var(--azul);color:white;border-color:var(--azul)}
   .empty-state .icono{font-size:40px;margin-bottom:12px}
 </style>
 </head>
@@ -117,7 +120,7 @@
       <div class="header-logo">🏥</div>
       <div>
         <div class="header-titulo">Memoria Anual de Enfermería</div>
-        <div class="header-subtitulo">HUVN · Dirección de Enfermería · 2025</div>
+        <div class="header-subtitulo">HUVN · Dirección de Enfermería</div>
       </div>
     </div>
     <div class="header-der">
@@ -140,8 +143,26 @@
     <main class="contenido">
 
       <div id="panel-resumen" class="panel active">
-        <div class="page-title">Resumen 2025</div>
-        <div class="page-subtitle">Estado actual de la recogida de datos para la Memoria Anual</div>
+        <div class="page-title" id="titulo-resumen">Resumen</div>
+        <div class="page-subtitle">Estado de la recogida de datos según el período seleccionado</div>
+        <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Desde</label>
+            <input type="date" id="filtro-desde" style="padding:8px 12px;border:1.5px solid var(--gris-borde);border-radius:7px;font-size:14px;font-family:inherit" onchange="aplicarFiltroFecha()">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Hasta</label>
+            <input type="date" id="filtro-hasta" style="padding:8px 12px;border:1.5px solid var(--gris-borde);border-radius:7px;font-size:14px;font-family:inherit" onchange="aplicarFiltroFecha()">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="setFiltroRapido('año')" class="btn-filtro" id="btn-año">2025</button>
+            <button onclick="setFiltroRapido('t1')" class="btn-filtro">1T</button>
+            <button onclick="setFiltroRapido('t2')" class="btn-filtro">2T</button>
+            <button onclick="setFiltroRapido('t3')" class="btn-filtro">3T</button>
+            <button onclick="setFiltroRapido('t4')" class="btn-filtro">4T</button>
+            <button onclick="setFiltroRapido('todo')" class="btn-filtro">Todo</button>
+          </div>
+        </div>
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-num" id="s-total">—</div><div class="stat-label">Entradas registradas</div></div>
           <div class="stat-card verde"><div class="stat-num" id="s-secciones">—</div><div class="stat-label">Secciones con datos</div></div>
@@ -198,6 +219,8 @@
         <div class="page-title">Datos registrados</div>
         <div class="page-subtitle">Todas las entradas de la memoria.</div>
         <div class="filtros">
+          <input type="date" id="filter-desde" style="width:auto;flex:0 0 140px;font-size:13px;padding:7px 10px" onchange="renderEntradas()" placeholder="Desde">
+          <input type="date" id="filter-hasta" style="width:auto;flex:0 0 140px;font-size:13px;padding:7px 10px" onchange="renderEntradas()" placeholder="Hasta">
           <select id="filter-seccion" onchange="renderEntradas()"><option value="">Todas las secciones</option></select>
           <select id="filter-centro" onchange="renderEntradas()"><option value="">Todos los centros</option><option>Hospital General</option><option>Hospital Materno-Infantil</option><option>Hospital Neurotraumatológico</option><option>Dirección de Enfermería</option></select>
           <select id="filter-tipo" onchange="renderEntradas()"><option value="">Todos los tipos</option><option value="proyecto">Proyecto</option><option value="formacion">Formación</option><option value="reconocimiento">Reconocimiento</option><option value="indicador_numerico">Indicador numérico</option><option value="texto_narrativo">Texto narrativo</option><option value="publicacion">Publicación</option><option value="tabla">Tabla</option><option value="lista">Lista</option></select>
@@ -385,6 +408,16 @@ async function inicializarSheet(){
 }
 
 async function cargarDatos(){
+  // Set default year filter to current data year
+  const hoy = new Date();
+  const anio = '2025';
+  if(document.getElementById('filtro-desde') && !document.getElementById('filtro-desde').value){
+    document.getElementById('filtro-desde').value = anio+'-01-01';
+    document.getElementById('filtro-hasta').value = anio+'-12-31';
+    document.getElementById('filter-desde') && (document.getElementById('filter-desde').value = anio+'-01-01');
+    document.getElementById('filter-hasta') && (document.getElementById('filter-hasta').value = anio+'-12-31');
+    document.getElementById('btn-año') && document.getElementById('btn-año').classList.add('activo');
+  }
   try{
     const data = await apiSheets(`/${sheetId}/values/Datos!A2:O10000`);
     const filas = data.values || [];
@@ -410,7 +443,7 @@ async function guardarEntrada(){
   btn.innerHTML='<span class="spinner"></span> Guardando...';btn.disabled=true;
   const contenido = recogerContenido(tipo);
   const fila = [
-    'id-'+Date.now(),getVal('f-fecha'),'2025',getVal('f-centro'),getVal('f-area'),
+    'id-'+Date.now(),getVal('f-fecha'),getVal('f-fecha').slice(0,4),getVal('f-centro'),getVal('f-area'),
     getVal('f-servicio'),seccion,getVal('f-subseccion'),tipo,titulo,
     JSON.stringify(contenido),getVal('f-observaciones'),getVal('f-autor'),
     usuarioActual?usuarioActual.email:'',new Date().toISOString()
@@ -470,17 +503,24 @@ function limpiarFormulario(){
 }
 
 function renderResumen(){
-  const secsConDatos=new Set(allEntradas.map(e=>e.seccion_memoria).filter(Boolean));
-  const autores=new Set(allEntradas.map(e=>e.email_autor||e.autor).filter(Boolean));
-  const ultima = allEntradas.length>0 ? allEntradas[allEntradas.length-1].fecha_registro : '—';
-  document.getElementById('s-total').textContent=allEntradas.length;
+  const desde = document.getElementById('filtro-desde')?.value || '';
+  const hasta = document.getElementById('filtro-hasta')?.value || '';
+  const datos = filtrarPorFecha(allEntradas, desde, hasta);
+  renderResumenConDatos(datos);
+}
+
+function renderResumenConDatos(datos){
+  const secsConDatos=new Set(datos.map(e=>e.seccion_memoria).filter(Boolean));
+  const autores=new Set(datos.map(e=>e.email_autor||e.autor).filter(Boolean));
+  const ultima = datos.length>0 ? datos[datos.length-1].fecha_registro : '—';
+  document.getElementById('s-total').textContent=datos.length;
   document.getElementById('s-secciones').textContent=secsConDatos.size+' / '+Object.keys(SECCIONES).length;
   document.getElementById('s-autores').textContent=autores.size||1;
   document.getElementById('s-ultima').textContent=ultima?ultima.slice(0,10):'—';
   const grid=document.getElementById('cobertura-grid');
   grid.innerHTML=Object.keys(SECCIONES).map(sec=>{
     const tiene=secsConDatos.has(sec);
-    const n=allEntradas.filter(e=>e.seccion_memoria===sec).length;
+    const n=datos.filter(e=>e.seccion_memoria===sec).length;
     return`<div class="cov-item"><div class="cov-dot ${tiene?'ok':'vacio'}"></div><span style="flex:1">${sec}</span>${tiene?`<span class="cov-n">${n}</span>`:'<span style="font-size:11px;color:#ccc">vacío</span>'}</div>`;
   }).join('');
 }
@@ -491,12 +531,20 @@ function renderEntradas(){
   const filtSec=document.getElementById('filter-seccion')?document.getElementById('filter-seccion').value:'';
   const filtCentro=document.getElementById('filter-centro')?document.getElementById('filter-centro').value:'';
   const filtTipo=document.getElementById('filter-tipo')?document.getElementById('filter-tipo').value:'';
+  const filtDesde=document.getElementById('filter-desde')?document.getElementById('filter-desde').value:'';
+  const filtHasta=document.getElementById('filter-hasta')?document.getElementById('filter-hasta').value:'';
   const seccSel=document.getElementById('filter-seccion');
   if(seccSel&&seccSel.options.length<3){
     const secs=[...new Set(allEntradas.map(e=>e.seccion_memoria).filter(Boolean))];
     seccSel.innerHTML='<option value="">Todas las secciones</option>'+secs.map(s=>`<option value="${s}">${s}</option>`).join('');
   }
-  let filtered=allEntradas.filter(e=>(!filtSec||e.seccion_memoria===filtSec)&&(!filtCentro||e.centro===filtCentro)&&(!filtTipo||e.tipo_contenido===filtTipo));
+  let filtered=allEntradas.filter(e=>
+    (!filtSec||e.seccion_memoria===filtSec)&&
+    (!filtCentro||e.centro===filtCentro)&&
+    (!filtTipo||e.tipo_contenido===filtTipo)&&
+    (!filtDesde||!e.fecha||e.fecha>=filtDesde)&&
+    (!filtHasta||!e.fecha||e.fecha<=filtHasta)
+  );
   if(!filtered.length){container.innerHTML='<div class="empty-state"><div class="icono">📭</div><p>No hay entradas para este filtro.</p></div>';return;}
   container.innerHTML=filtered.map((e,i)=>{
     const c = e.contenido || {};
@@ -584,6 +632,51 @@ function descargarMemoria(){
 function toggleDetalle(i){
   const d = document.getElementById('detalle-'+i);
   if(d) d.classList.toggle('visible');
+}
+
+function setFiltroRapido(tipo){
+  document.querySelectorAll('.btn-filtro').forEach(b=>b.classList.remove('activo'));
+  event.target.classList.add('activo');
+  const year = new Date().getFullYear();
+  const y = '2025'; // año base de datos
+  const desde = document.getElementById('filtro-desde');
+  const hasta = document.getElementById('filtro-hasta');
+  if(tipo==='año'){desde.value=y+'-01-01';hasta.value=y+'-12-31';}
+  else if(tipo==='t1'){desde.value=y+'-01-01';hasta.value=y+'-03-31';}
+  else if(tipo==='t2'){desde.value=y+'-04-01';hasta.value=y+'-06-30';}
+  else if(tipo==='t3'){desde.value=y+'-07-01';hasta.value=y+'-09-30';}
+  else if(tipo==='t4'){desde.value=y+'-10-01';hasta.value=y+'-12-31';}
+  else if(tipo==='todo'){desde.value='';hasta.value='';}
+  aplicarFiltroFecha();
+}
+
+function aplicarFiltroFecha(){
+  const desde = document.getElementById('filtro-desde').value;
+  const hasta = document.getElementById('filtro-hasta').value;
+  // Sync with ver datos filters
+  const fd = document.getElementById('filter-desde');
+  const fh = document.getElementById('filter-hasta');
+  if(fd) fd.value = desde;
+  if(fh) fh.value = hasta;
+  // Update resumen title
+  let label = 'Resumen';
+  if(desde && hasta) label = `Resumen ${desde.slice(0,4)===hasta.slice(0,4)?desde.slice(0,4):desde+' → '+hasta}`;
+  else if(desde) label = `Resumen desde ${desde}`;
+  else if(hasta) label = `Resumen hasta ${hasta}`;
+  const t = document.getElementById('titulo-resumen');
+  if(t) t.textContent = label;
+  // Re-render with filter
+  const filtered = filtrarPorFecha(allEntradas, desde, hasta);
+  renderResumenConDatos(filtered);
+}
+
+function filtrarPorFecha(entradas, desde, hasta){
+  return entradas.filter(e => {
+    if(!e.fecha) return true;
+    if(desde && e.fecha < desde) return false;
+    if(hasta && e.fecha > hasta) return false;
+    return true;
+  });
 }
 
 function showToast(msg,tipo){
