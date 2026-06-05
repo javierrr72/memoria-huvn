@@ -92,6 +92,13 @@
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .empty-state{text-align:center;padding:48px 20px;color:var(--texto-suave)}
+  .btn-accion{border:none;background:transparent;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:5px;font-family:inherit;transition:background .15s}
+  .btn-editar{color:var(--azul-claro)}.btn-editar:hover{background:var(--azul-fondo)}
+  .btn-eliminar{color:#c0392b}.btn-eliminar:hover{background:#fdeaea}
+  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:1000;display:flex;align-items:center;justify-content:center}
+  .modal{background:white;border-radius:var(--radio);padding:28px 32px;width:600px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2)}
+  .modal h3{font-size:16px;font-weight:600;color:var(--azul);margin-bottom:20px}
+  .modal-btns{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
   .btn-filtro{background:var(--gris);border:1.5px solid var(--gris-borde);color:var(--texto-suave);padding:7px 14px;border-radius:7px;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s}
   .btn-filtro:hover{background:var(--azul-fondo);color:var(--azul);border-color:var(--azul-claro)}
   .btn-filtro.activo{background:var(--azul);color:white;border-color:var(--azul)}
@@ -743,6 +750,96 @@ async function enviarSolicitud(){
   }
   btn.innerHTML = '📧 Enviar solicitud';
   btn.disabled = false;
+}
+
+async function eliminarEntrada(idx, id){
+  if(!confirm('¿Seguro que quieres eliminar esta entrada? Esta acción no se puede deshacer.')) return;
+  try {
+    // Get all rows to find the row number
+    const data = await apiSheets(`/${sheetId}/values/Datos!A:A`);
+    const filas = data.values || [];
+    const rowNum = filas.findIndex(f => f[0] === id);
+    if(rowNum === -1){ showToast('No se encontró la entrada','error'); return; }
+    const sheetRow = rowNum + 1; // 1-indexed, row 1 is header so data starts at 2
+    // Clear the row content
+    await apiSheets(`/${sheetId}/values/Datos!A${sheetRow}:O${sheetRow}?valueInputOption=RAW`,'PUT',{values:[['','','','','','','','','','','','','','','']]});
+    showToast('Entrada eliminada ✓','ok');
+    await cargarDatos();
+    renderEntradas();
+  } catch(e){ showToast('Error al eliminar: '+e.message,'error'); }
+}
+
+function abrirEditar(idx){
+  const e = allEntradas[idx];
+  if(!e) return;
+  // Build modal
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'modal-editar';
+  const c = e.contenido || {};
+  const t = e.tipo_contenido;
+  let camposExtra = '';
+  if(t==='proyecto') camposExtra = `<div class="form-group span2"><label>Estado</label><select id="me-estado"><option${c.estado==='En marcha'?' selected':''}>En marcha</option><option${c.estado==='Completado'?' selected':''}>Completado</option><option${c.estado==='Planificado'?' selected':''}>Planificado</option></select></div><div class="form-group span2"><label>Descripción</label><textarea id="me-descripcion" style="min-height:80px">${c.descripcion||''}</textarea></div><div class="form-group span2"><label>Responsable</label><input type="text" id="me-responsable" value="${c.responsable||''}"></div><div class="form-group span2"><label>Resultados / Próximos pasos</label><textarea id="me-resultados" style="min-height:60px">${c.resultados||''}</textarea></div>`;
+  else if(t==='formacion') camposExtra = `<div class="form-group span2"><label>Tipo</label><input type="text" id="me-tipo_formacion" value="${c.tipo_formacion||''}"></div><div class="form-group span2"><label>Nº profesionales</label><input type="number" id="me-num_profesionales" value="${c.num_profesionales||''}"></div><div class="form-group span2"><label>Destinatarios</label><input type="text" id="me-entidad" value="${c.entidad||''}"></div><div class="form-group span2"><label>Descripción</label><textarea id="me-descripcion">${c.descripcion||''}</textarea></div>`;
+  else if(t==='reconocimiento') camposExtra = `<div class="form-group span2"><label>Organismo</label><input type="text" id="me-organismo" value="${c.organismo||''}"></div><div class="form-group span2"><label>Descripción</label><textarea id="me-descripcion">${c.descripcion||''}</textarea></div>`;
+  else if(t==='indicador_numerico') camposExtra = `<div class="form-group span2"><label>Valor</label><input type="text" id="me-valor" value="${c.valor||''}"></div><div class="form-group span2"><label>Unidad</label><input type="text" id="me-unidad" value="${c.unidad||''}"></div><div class="form-group span2"><label>Fuente</label><input type="text" id="me-fuente" value="${c.fuente||''}"></div>`;
+  else if(t==='texto_narrativo') camposExtra = `<div class="form-group span2"><label>Contenido</label><textarea id="me-contenido" style="min-height:120px">${c.contenido||''}</textarea></div>`;
+  else if(t==='lista') camposExtra = `<div class="form-group span2"><label>Items (uno por línea)</label><textarea id="me-items" style="min-height:100px">${(c.items||[]).join('\n')}</textarea></div>`;
+  else if(t==='tabla') camposExtra = `<div class="form-group span2"><label>Descripción</label><input type="text" id="me-descripcion" value="${c.descripcion||''}"></div><div class="form-group span2"><label>Datos</label><textarea id="me-contenido" style="min-height:100px">${c.contenido||''}</textarea></div>`;
+  else if(t==='publicacion') camposExtra = `<div class="form-group span2"><label>Autores</label><input type="text" id="me-autores" value="${c.autores||''}"></div><div class="form-group span2"><label>Revista/Congreso</label><input type="text" id="me-revista" value="${c.revista||''}"></div><div class="form-group span2"><label>DOI</label><input type="text" id="me-doi" value="${c.doi||''}"></div>`;
+
+  modal.innerHTML = `<div class="modal">
+    <h3>✏️ Editar entrada</h3>
+    <div class="form-grid">
+      <div class="form-group span2"><label>Título</label><input type="text" id="me-titulo" value="${e.titulo||''}"></div>
+      <div class="form-group"><label>Fecha</label><input type="date" id="me-fecha" value="${e.fecha||''}"></div>
+      <div class="form-group"><label>Observaciones</label><input type="text" id="me-obs" value="${e.observaciones||''}"></div>
+      ${camposExtra}
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-primary" onclick="guardarEdicion('${e.id}')">💾 Guardar cambios</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(ev){ if(ev.target===modal) cerrarModal(); });
+}
+
+function cerrarModal(){
+  const m = document.getElementById('modal-editar');
+  if(m) m.remove();
+}
+
+function getModalVal(id){ const el=document.getElementById(id); return el?el.value:''; }
+
+async function guardarEdicion(id){
+  try {
+    const data = await apiSheets(`/${sheetId}/values/Datos!A:A`);
+    const filas = data.values || [];
+    const rowNum = filas.findIndex(f => f[0] === id);
+    if(rowNum === -1){ showToast('No se encontró la entrada','error'); return; }
+    const sheetRow = rowNum + 1;
+    const entradaActual = allEntradas.find(e=>e.id===id);
+    if(!entradaActual) return;
+    const t = entradaActual.tipo_contenido;
+    const c = entradaActual.contenido || {};
+    let nuevoContenido = {...c};
+    if(t==='proyecto'){nuevoContenido.estado=getModalVal('me-estado');nuevoContenido.descripcion=getModalVal('me-descripcion');nuevoContenido.responsable=getModalVal('me-responsable');nuevoContenido.resultados=getModalVal('me-resultados');}
+    else if(t==='formacion'){nuevoContenido.tipo_formacion=getModalVal('me-tipo_formacion');nuevoContenido.num_profesionales=getModalVal('me-num_profesionales');nuevoContenido.entidad=getModalVal('me-entidad');nuevoContenido.descripcion=getModalVal('me-descripcion');}
+    else if(t==='reconocimiento'){nuevoContenido.organismo=getModalVal('me-organismo');nuevoContenido.descripcion=getModalVal('me-descripcion');}
+    else if(t==='indicador_numerico'){nuevoContenido.valor=getModalVal('me-valor');nuevoContenido.unidad=getModalVal('me-unidad');nuevoContenido.fuente=getModalVal('me-fuente');}
+    else if(t==='texto_narrativo'){nuevoContenido.contenido=getModalVal('me-contenido');}
+    else if(t==='lista'){nuevoContenido.items=getModalVal('me-items').split('\n').filter(l=>l.trim());}
+    else if(t==='tabla'){nuevoContenido.descripcion=getModalVal('me-descripcion');nuevoContenido.contenido=getModalVal('me-contenido');}
+    else if(t==='publicacion'){nuevoContenido.autores=getModalVal('me-autores');nuevoContenido.revista=getModalVal('me-revista');nuevoContenido.doi=getModalVal('me-doi');}
+    // Update the row
+    const filaNueva = [id, getModalVal('me-fecha'), entradaActual.periodo_etiqueta, entradaActual.centro, entradaActual.area, entradaActual.servicio, entradaActual.seccion_memoria, entradaActual.subseccion, t, getModalVal('me-titulo'), JSON.stringify(nuevoContenido), getModalVal('me-obs'), entradaActual.autor, entradaActual.email_autor, entradaActual.fecha_registro];
+    await apiSheets(`/${sheetId}/values/Datos!A${sheetRow}:O${sheetRow}?valueInputOption=RAW`,'PUT',{values:[filaNueva]});
+    cerrarModal();
+    showToast('Cambios guardados ✓','ok');
+    await cargarDatos();
+    renderEntradas();
+  } catch(e){ showToast('Error al guardar: '+e.message,'error'); }
 }
 
 function showToast(msg,tipo){
