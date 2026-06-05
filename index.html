@@ -287,6 +287,7 @@
 <script>
 const CLIENT_ID = '669232783014-5dc86g3p2djj0l39if0440vg5mc5g8cu.apps.googleusercontent.com';
 const SHEET_NAME = 'Memoria Enfermería HUVN 2025';
+const FIXED_SHEET_ID = '1COrlfUwyNYelak2BxDJKcrvigjHDMmNcsLaE2mJl-3Q';
 const EMAILJS_SERVICE = 'service_e7vnayx';
 const EMAILJS_TEMPLATE = 'template_60xflmt';
 const EMAILJS_KEY = 'uxYw90xt1YIYYvpng';
@@ -456,18 +457,8 @@ async function sincronizarDatosIniciales(sid){
 async function inicializarSheet(){
   showToast('Conectando con Google Sheets...');
   try{
-    let sid = await buscarSheet();
-    if(!sid){
-      showToast('Creando hoja de datos...');
-      sid = await crearSheet();
-      const filas = [HEADERS, ...DATOS_INICIALES];
-      await apiSheets(`/${sid}/values/Datos!A1:O${filas.length}?valueInputOption=RAW`,'PUT',{values:filas});
-      showToast('Hoja creada con datos iniciales ✓','ok');
-    } else {
-      // Comprobar si faltan entradas y añadirlas
-      await sincronizarDatosIniciales(sid);
-    }
-    sheetId = sid;
+    // Usar siempre la hoja central del HUVN
+    sheetId = FIXED_SHEET_ID;
     await cargarDatos();
   }catch(e){showToast('Error al inicializar: '+e.message,'error');}
 }
