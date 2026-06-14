@@ -468,12 +468,14 @@ async function cargarDatos(){
   try{
     const data = await apiSheets(`/${sheetId}/values/Datos!A2:O10000`);
     const filas = data.values || [];
-    allEntradas = filas.map(f => ({
-      id:f[0]||'',fecha:f[1]||'',periodo_etiqueta:f[2]||'',centro:f[3]||'',area:f[4]||'',
-      servicio:f[5]||'',seccion_memoria:f[6]||'',subseccion:f[7]||'',tipo_contenido:f[8]||'',
-      titulo:f[9]||'',contenido:parseContenido(f[10]||'{}'),observaciones:f[11]||'',
-      autor:f[12]||'',email_autor:f[13]||'',fecha_registro:f[14]||''
-    }));
+    allEntradas = filas
+      .filter(f => f[0] && f[0].trim() !== '')  // ignorar filas sin ID (registros vacíos)
+      .map(f => ({
+        id:f[0]||'',fecha:f[1]||'',periodo_etiqueta:f[2]||'',centro:f[3]||'',area:f[4]||'',
+        servicio:f[5]||'',seccion_memoria:f[6]||'',subseccion:f[7]||'',tipo_contenido:f[8]||'',
+        titulo:f[9]||'',contenido:parseContenido(f[10]||'{}'),observaciones:f[11]||'',
+        autor:f[12]||'',email_autor:f[13]||'',fecha_registro:f[14]||''
+      }));
     renderResumen();
     renderEntradas();
   }catch(e){showToast('Error al cargar: '+e.message,'error');}
@@ -752,14 +754,33 @@ async function enviarSolicitud(){
 async function eliminarEntrada(idx, id){
   if(!confirm('¿Seguro que quieres eliminar esta entrada? Esta acción no se puede deshacer.')) return;
   try {
-    // Get all rows to find the row number
+    // 1. Encontrar el número de fila en el Sheets
     const data = await apiSheets(`/${sheetId}/values/Datos!A:A`);
     const filas = data.values || [];
     const rowNum = filas.findIndex(f => f[0] === id);
     if(rowNum === -1){ showToast('No se encontró la entrada','error'); return; }
-    const sheetRow = rowNum + 1; // 1-indexed, row 1 is header so data starts at 2
-    // Clear the row content
-    await apiSheets(`/${sheetId}/values/Datos!A${sheetRow}:O${sheetRow}?valueInputOption=RAW`,'PUT',{values:[['','','','','','','','','','','','','','','']]});
+    // rowNum es 0-indexed contando desde la cabecera (fila 0 = cabecera)
+
+    // 2. Obtener el sheetId numérico de la pestaña "Datos"
+    const meta = await apiSheets(`/${sheetId}?fields=sheets.properties`);
+    const hoja = (meta.sheets || []).find(s => s.properties.title === 'Datos');
+    if(!hoja){ showToast('No se encontró la hoja Datos','error'); return; }
+    const tabId = hoja.properties.sheetId;
+
+    // 3. Eliminar la fila de verdad con deleteDimension
+    await apiSheets(`/${sheetId}:batchUpdate`, 'POST', {
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId: tabId,
+            dimension: 'ROWS',
+            startIndex: rowNum,
+            endIndex: rowNum + 1
+          }
+        }
+      }]
+    });
+
     showToast('Entrada eliminada ✓','ok');
     await cargarDatos();
     renderEntradas();
