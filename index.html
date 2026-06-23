@@ -146,7 +146,6 @@
       <div class="nav-item" onclick="mostrarPanel('ver',this)"><span class="nav-icon">📋</span> Ver datos</div>
       <div class="sidebar-seccion" style="margin-top:8px;display:none" id="nav-memoria-seccion">Memoria</div>
       <div class="nav-item" onclick="mostrarPanel('solicitar',this)" style="display:none" id="nav-solicitar"><span class="nav-icon">📄</span> Solicitar memoria</div>
-
     </nav>
     <main class="contenido">
 
@@ -204,7 +203,7 @@
         <div class="form-card">
           <h3>3. ¿Qué tipo de dato es?</h3>
           <div class="form-grid">
-            <div class="form-group"><label>Tipo de dato</label><select id="f-tipo" onchange="updateCamposDinamicos()"><option value="">Selecciona...</option><option value="texto_narrativo">Texto narrativo</option><option value="indicador_numerico">Indicador numérico</option><option value="proyecto">Proyecto</option><option value="formacion">Formación</option><option value="reconocimiento">Reconocimiento / Premio / Certificación</option><option value="publicacion">Publicación / Comunicación científica</option><option value="tabla">Tabla de datos</option><option value="lista">Lista de items</option></select><div class="tipo-hint" id="tipo-hint"></div></div>
+            <div class="form-group"><label>Tipo de dato</label><select id="f-tipo" onchange="updateCamposDinamicos()"><option value="">Selecciona...</option><option value="texto_narrativo">Texto narrativo</option><option value="proyecto">Proyecto</option><option value="formacion">Formación</option><option value="reconocimiento">Reconocimiento / Premio / Certificación</option><option value="publicacion">Publicación / Comunicación científica</option><option value="tabla">Tabla de datos</option><option value="lista">Lista de items</option></select><div class="tipo-hint" id="tipo-hint"></div></div>
             <div class="form-group"><label>Fecha del dato</label><input type="date" id="f-fecha" value="2025-12-31"></div>
             <div class="form-group span2"><label>Título descriptivo</label><input type="text" id="f-titulo" placeholder="Describe brevemente qué es este dato..."></div>
           </div>
@@ -272,9 +271,7 @@
               📧 Enviar solicitud
             </button>
           </div>
-          <div style="margin-top:16px;font-size:13px;color:var(--texto-suave);background:var(--gris);padding:12px;border-radius:8px;">
-            
-          </div>
+          <div style="margin-top:16px;font-size:13px;color:var(--texto-suave);background:var(--gris);padding:12px;border-radius:8px;"></div>
         </div>
       </div>
 
@@ -299,7 +296,6 @@ let usuarioActual = null;
 let sheetId = null;
 let allEntradas = [];
 
-// Cabeceras de la hoja
 const HEADERS = ['id','fecha','periodo_etiqueta','centro','area','servicio','seccion_memoria','subseccion','tipo_contenido','titulo','contenido_json','observaciones','autor','email_autor','fecha_registro'];
 
 const DATOS_INICIALES = [
@@ -334,7 +330,7 @@ const TIPO_HINTS = {texto_narrativo:'Para párrafos descriptivos o texto libre.'
 const AREAS = {
   'Hospital General':['Área Quirúrgica','Área Médica','Área de Críticos','Área de Salud Mental'],
   'Hospital Materno-Infantil':['Área Obstétrico-Ginecológica','Área Pediatría','Área Neonatal'],
-  'Hospital Neurotraumatológico':['Cirugía Ortopédica y Traumatología','Bloque Quirúrgico','Área de Críticos','Área de Terapias'],
+  'Hospital Neurotraumatológico':['Área de Hospitalización','Bloque Quirúrgico','Área de Críticos','Área de Terapias','Consultas'],
   'HAR de Guadix':['HAR de Guadix'],
   'HAR de Alcalá la Real':['HAR de Alcalá la Real'],
   'Gestión de Personas':['Gestión de Personas'],
@@ -349,7 +345,8 @@ const SERVICIOS = {
   'Área Obstétrico-Ginecológica':['Paritorio','Hospitalización Prenatal y Postnatal','Urgencias Obstétricas','Quirófanos Obstétricos','CCEE Obstetricia y Ginecología','Global Área Obstétrico-Ginecológica'],
   'Área Pediatría':['Hospitalización Pediátrica','UCI Pediátrica','Oncopediatría','HD Pediátrico','Urgencias Pediátricas','CCEE Pediatría','Global Área Pediatría'],
   'Área Neonatal':['Cuidados Intensivos, Intermedios y Básicos','Global Área Neonatal'],
-  'Cirugía Ortopédica y Traumatología':['Cirugía Plástica y Reparadora','Cirugía Maxilofacial','Neurología','Neurocirugía','Medicina Física y Rehabilitación','Neurofisiología','Global Cirugía Ortopédica y Traumatología'],
+  'Área de Hospitalización':['Cirugía Plástica y Reparadora','Cirugía Maxilofacial','Neurología','Neurocirugía','Medicina Física y Rehabilitación','Neurofisiología','Global Área de Hospitalización'],
+  'Consultas':['Consultas Externas'],
   'Bloque Quirúrgico':['Quirófanos','Reanimación','Esterilización'],
   'Área de Críticos HRT':['UCI','Urgencias'],
   'Área de Terapias':['Área de Terapias'],
@@ -379,9 +376,7 @@ async function iniciarSesion(){
         document.getElementById('pantalla-login').style.display = 'none';
         document.getElementById('pantalla-app').style.display = 'block';
         showToast('Bienvenido/a, '+info.name.split(' ')[0]+' ✓','ok');
-
         await inicializarSheet();
-        // Mostrar solicitar memoria solo a usuarios autorizados
         if(SOLICITANTES.includes(info.email)){
           const navSolicitar = document.getElementById('nav-solicitar');
           const navSeccion = document.getElementById('nav-memoria-seccion');
@@ -420,56 +415,20 @@ async function apiDrive(path, method='GET', body=null){
   return r.json();
 }
 
-async function buscarSheet(){
-  const q = encodeURIComponent(`name='${SHEET_NAME}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`);
-  const data = await apiDrive(`/files?q=${q}&fields=files(id,name)`);
-  return (data.files && data.files.length > 0) ? data.files[0].id : null;
-}
-
-async function crearSheet(){
-  const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets',{
-    method:'POST',
-    headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-    body:JSON.stringify({properties:{title:SHEET_NAME},sheets:[{properties:{title:'Datos'}}]})
-  });
-  if(!r.ok){
-    const e = await r.text();
-    let msg = 'No se pudo crear la hoja ('+r.status+')';
-    try { const j = JSON.parse(e); msg = j.error?.message || msg; } catch(x){}
-    throw new Error(msg);
-  }
-  const data = await r.json();
-  return data.spreadsheetId;
-}
-
-async function sincronizarDatosIniciales(sid){
-  try {
-    const data = await apiSheets(`/${sid}/values/Datos!A2:A1000`);
-    const idsExistentes = new Set((data.values||[]).map(r=>r[0]).filter(Boolean));
-    const faltantes = DATOS_INICIALES.filter(f => !idsExistentes.has(f[0]));
-    if(faltantes.length > 0){
-      await apiSheets(`/${sid}/values/Datos!A:O:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,'POST',{values:faltantes});
-      showToast(`Añadidas ${faltantes.length} entradas nuevas ✓`,'ok');
-    }
-  } catch(e){ console.warn('Sync:', e.message); }
-}
-
 async function inicializarSheet(){
   showToast('Conectando con Google Sheets...');
   try{
-    // Usar siempre la hoja central del HUVN
     sheetId = FIXED_SHEET_ID;
     await cargarDatos();
   }catch(e){showToast('Error al inicializar: '+e.message,'error');}
 }
 
 async function cargarDatos(){
-  // El filtro empieza vacío (muestra todo) hasta que el usuario elija
   try{
     const data = await apiSheets(`/${sheetId}/values/Datos!A2:O10000`);
     const filas = data.values || [];
     allEntradas = filas
-      .filter(f => f[0] && f[0].trim() !== '')  // ignorar filas sin ID (registros vacíos)
+      .filter(f => f[0] && f[0].trim() !== '')
       .map(f => ({
         id:f[0]||'',fecha:f[1]||'',periodo_etiqueta:f[2]||'',centro:f[3]||'',area:f[4]||'',
         servicio:f[5]||'',seccion_memoria:f[6]||'',subseccion:f[7]||'',tipo_contenido:f[8]||'',
@@ -666,9 +625,6 @@ function renderEntradas(){
   }).join('');
 }
 
-
-
-
 function toggleDetalle(i){
   const d = document.getElementById('detalle-'+i);
   if(d) d.classList.toggle('visible');
@@ -679,7 +635,6 @@ function setFiltroRapido(tipo){
   event.target.classList.add('activo');
   const desde = document.getElementById('filtro-desde');
   const hasta = document.getElementById('filtro-hasta');
-  // Usar el año que ya está en el campo desde, o el de los datos (el más reciente)
   let y = desde.value ? desde.value.slice(0,4) : obtenerAnioReciente();
   if(tipo==='año'){desde.value=y+'-01-01';hasta.value=y+'-12-31';}
   else if(tipo==='t1'){desde.value=y+'-01-01';hasta.value=y+'-03-31';}
@@ -699,19 +654,16 @@ function obtenerAnioReciente(){
 function aplicarFiltroFecha(){
   const desde = document.getElementById('filtro-desde').value;
   const hasta = document.getElementById('filtro-hasta').value;
-  // Sync with ver datos filters
   const fd = document.getElementById('filter-desde');
   const fh = document.getElementById('filter-hasta');
   if(fd) fd.value = desde;
   if(fh) fh.value = hasta;
-  // Update resumen title
   let label = 'Resumen';
   if(desde && hasta) label = `Resumen ${desde.slice(0,4)===hasta.slice(0,4)?desde.slice(0,4):desde+' → '+hasta}`;
   else if(desde) label = `Resumen desde ${desde}`;
   else if(hasta) label = `Resumen hasta ${hasta}`;
   const t = document.getElementById('titulo-resumen');
   if(t) t.textContent = label;
-  // Re-render with filter
   const filtered = filtrarPorFecha(allEntradas, desde, hasta);
   renderResumenConDatos(filtered);
 }
@@ -754,20 +706,14 @@ async function enviarSolicitud(){
 async function eliminarEntrada(idx, id){
   if(!confirm('¿Seguro que quieres eliminar esta entrada? Esta acción no se puede deshacer.')) return;
   try {
-    // 1. Encontrar el número de fila en el Sheets
     const data = await apiSheets(`/${sheetId}/values/Datos!A:A`);
     const filas = data.values || [];
     const rowNum = filas.findIndex(f => f[0] === id);
     if(rowNum === -1){ showToast('No se encontró la entrada','error'); return; }
-    // rowNum es 0-indexed contando desde la cabecera (fila 0 = cabecera)
-
-    // 2. Obtener el sheetId numérico de la pestaña "Datos"
     const meta = await apiSheets(`/${sheetId}?fields=sheets.properties`);
     const hoja = (meta.sheets || []).find(s => s.properties.title === 'Datos');
     if(!hoja){ showToast('No se encontró la hoja Datos','error'); return; }
     const tabId = hoja.properties.sheetId;
-
-    // 3. Eliminar la fila de verdad con deleteDimension
     await apiSheets(`/${sheetId}:batchUpdate`, 'POST', {
       requests: [{
         deleteDimension: {
@@ -780,7 +726,6 @@ async function eliminarEntrada(idx, id){
         }
       }]
     });
-
     showToast('Entrada eliminada ✓','ok');
     await cargarDatos();
     renderEntradas();
@@ -790,7 +735,6 @@ async function eliminarEntrada(idx, id){
 function abrirEditar(idx){
   const e = allEntradas[idx];
   if(!e) return;
-  // Build modal
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.id = 'modal-editar';
@@ -805,7 +749,6 @@ function abrirEditar(idx){
   else if(t==='lista') camposExtra = `<div class="form-group span2"><label>Items (uno por línea)</label><textarea id="me-items" style="min-height:100px">${(c.items||[]).join('\n')}</textarea></div>`;
   else if(t==='tabla') camposExtra = `<div class="form-group span2"><label>Descripción</label><input type="text" id="me-descripcion" value="${c.descripcion||''}"></div><div class="form-group span2"><label>Datos</label><textarea id="me-contenido" style="min-height:100px">${c.contenido||''}</textarea></div>`;
   else if(t==='publicacion') camposExtra = `<div class="form-group span2"><label>Autores</label><input type="text" id="me-autores" value="${c.autores||''}"></div><div class="form-group span2"><label>Revista/Congreso</label><input type="text" id="me-revista" value="${c.revista||''}"></div><div class="form-group span2"><label>DOI</label><input type="text" id="me-doi" value="${c.doi||''}"></div>`;
-
   modal.innerHTML = `<div class="modal">
     <h3>✏️ Editar entrada</h3>
     <div class="form-grid">
@@ -850,7 +793,6 @@ async function guardarEdicion(id){
     else if(t==='lista'){nuevoContenido.items=getModalVal('me-items').split('\n').filter(l=>l.trim());}
     else if(t==='tabla'){nuevoContenido.descripcion=getModalVal('me-descripcion');nuevoContenido.contenido=getModalVal('me-contenido');}
     else if(t==='publicacion'){nuevoContenido.autores=getModalVal('me-autores');nuevoContenido.revista=getModalVal('me-revista');nuevoContenido.doi=getModalVal('me-doi');}
-    // Update the row
     const filaNueva = [id, getModalVal('me-fecha'), entradaActual.periodo_etiqueta, entradaActual.centro, entradaActual.area, entradaActual.servicio, entradaActual.seccion_memoria, entradaActual.subseccion, t, getModalVal('me-titulo'), JSON.stringify(nuevoContenido), getModalVal('me-obs'), entradaActual.autor, entradaActual.email_autor, entradaActual.fecha_registro];
     await apiSheets(`/${sheetId}/values/Datos!A${sheetRow}:O${sheetRow}?valueInputOption=RAW`,'PUT',{values:[filaNueva]});
     cerrarModal();
