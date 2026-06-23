@@ -204,7 +204,7 @@
           <h3>3. ¿Qué tipo de dato es?</h3>
           <div class="form-grid">
             <div class="form-group"><label>Tipo de dato</label><select id="f-tipo" onchange="updateCamposDinamicos()"><option value="">Selecciona...</option><option value="texto_narrativo">Texto narrativo</option><option value="proyecto">Proyecto</option><option value="formacion">Formación</option><option value="reconocimiento">Reconocimiento / Premio / Certificación</option><option value="publicacion">Publicación / Comunicación científica</option><option value="tabla">Tabla de datos</option><option value="lista">Lista de items</option></select><div class="tipo-hint" id="tipo-hint"></div></div>
-            <div class="form-group"><label>Fecha del dato</label><input type="date" id="f-fecha" value="2025-12-31"></div>
+            <div class="form-group"><label>Fecha del dato</label><input type="date" id="f-fecha"></div>
             <div class="form-group span2"><label>Título descriptivo</label><input type="text" id="f-titulo" placeholder="Describe brevemente qué es este dato..."></div>
           </div>
           <div class="campos-extra" id="campos-dinamicos"></div>
@@ -373,6 +373,7 @@ async function iniciarSesion(){
         document.getElementById('user-nombre').textContent = info.name.split(' ')[0];
         document.getElementById('user-inicial').textContent = info.name.charAt(0).toUpperCase();
         document.getElementById('f-autor').value = info.name;
+        document.getElementById('f-fecha').value = new Date().toISOString().slice(0,10);
         document.getElementById('pantalla-login').style.display = 'none';
         document.getElementById('pantalla-app').style.display = 'block';
         showToast('Bienvenido/a, '+info.name.split(' ')[0]+' ✓','ok');
@@ -502,7 +503,7 @@ function recogerContenido(tipo){
 function limpiarFormulario(){
   ['f-centro','f-area','f-servicio','f-seccion','f-subseccion','f-tipo'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
   ['f-titulo','f-observaciones'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('f-fecha').value='2025-12-31';
+  document.getElementById('f-fecha').value=new Date().toISOString().slice(0,10);
   document.getElementById('campos-dinamicos').innerHTML='';
   document.getElementById('tipo-hint').textContent='';
   document.getElementById('f-area').innerHTML='<option value="">Primero elige centro</option>';
